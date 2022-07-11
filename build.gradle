@@ -1,4 +1,5 @@
 plugins {
+    id 'com.github.johnrengelman.shadow' version '7.1.0'
     id 'java'
 }
 
@@ -18,6 +19,8 @@ repositories {
 }
 
 dependencies {
+    implementation 'com.gmail.furkanaxx34:DBukkit:1.0.0'
+
     compileOnly 'org.spigotmc:spigot-api:1.19-R0.1-SNAPSHOT'
 }
 
@@ -36,6 +39,16 @@ tasks.withType(JavaCompile).configureEach {
         options.release = targetJavaVersion
     }
 }
+
+shadowJar {
+    archiveFileName.set("TunnelGame-${project.version}.jar")
+    exclude 'META-INF/**'
+    exclude '**/MANIFEST.MF'
+    relocate 'co.aikar.commands', 'me.dantero.tunnelgame.acf'
+    relocate 'co.aikar.locales', 'me.dantero.tunnelgame.locales'
+    minimize();
+}
+
 
 processResources {
     def props = [version: version]
