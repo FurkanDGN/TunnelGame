@@ -1,3 +1,3 @@
 # Tunnel Game
 
-![alt text](images/plugin-arc.png)
+![arc](images/plugin-arc.png)
