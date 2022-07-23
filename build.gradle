@@ -1,60 +1,31 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '7.1.0'
-    id 'java'
+    id "com.github.johnrengelman.shadow" version "7.0.0"
+    id "java"
 }
 
-group = 'me.dantero'
-version = '1.0.0'
-
-repositories {
-    mavenCentral()
-    maven {
-        name = 'spigotmc-repo'
-        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
-    }
-    maven {
-        name = 'sonatype'
-        url = 'https://oss.sonatype.org/content/groups/public/'
+allprojects {
+    apply plugin: "java"
+    apply plugin: "com.github.johnrengelman.shadow"
+    group = "com.github.furkandgn"
+    version = "1.0.0"
+    sourceCompatibility = 17
+    targetCompatibility = 17
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url "https://papermc.io/repo/repository/maven-public/"}
+        maven { url "https://oss.sonatype.org/content/groups/public/"}
+        maven { url "https://maven.enginehub.org/repo/" }
+        maven { url "https://hub.spigotmc.org/nexus/content/repositories/snapshots/" }
+        maven { url "https://repo.glaremasters.me/repository/concuncan/" }
     }
 }
 
 dependencies {
-    implementation 'com.gmail.furkanaxx34:DBukkit:1.0.0'
-
-    compileOnly 'org.spigotmc:spigot-api:1.19-R0.1-SNAPSHOT'
-}
-
-def targetJavaVersion = 17
-java {
-    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaVersion
-    if (JavaVersion.current() < javaVersion) {
-        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
-    }
-}
-
-tasks.withType(JavaCompile).configureEach {
-    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
-        options.release = targetJavaVersion
-    }
+    implementation project(":plugin")
+    implementation project(":common")
 }
 
 shadowJar {
     archiveFileName.set("TunnelGame-${project.version}.jar")
-    exclude 'META-INF/**'
-    exclude '**/MANIFEST.MF'
-    relocate 'co.aikar.commands', 'me.dantero.tunnelgame.acf'
-    relocate 'co.aikar.locales', 'me.dantero.tunnelgame.locales'
-    minimize();
-}
-
-
-processResources {
-    def props = [version: version]
-    inputs.properties props
-    filteringCharset 'UTF-8'
-    filesMatching('plugin.yml') {
-        expand props
-    }
 }

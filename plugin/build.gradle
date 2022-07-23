@@ -1,0 +1,17 @@
+dependencies {
+    compileOnly project(":common")
+
+    compileOnly 'com.grinderwolf:slimeworldmanager-api:2.2.1'
+    compileOnly "com.sk89q.worldedit:worldedit-bukkit:7.2.0-SNAPSHOT"
+
+    compileOnly "org.spigotmc:spigot-api:1.18.2-R0.1-SNAPSHOT"
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
