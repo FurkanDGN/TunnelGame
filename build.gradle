@@ -19,6 +19,11 @@ allprojects {
         maven { url "https://hub.spigotmc.org/nexus/content/repositories/snapshots/" }
         maven { url "https://repo.glaremasters.me/repository/concuncan/" }
     }
+
+    dependencies {
+        compileOnly "org.jetbrains:annotations:23.0.0"
+        annotationProcessor "org.jetbrains:annotations:23.0.0"
+    }
 }
 
 dependencies {

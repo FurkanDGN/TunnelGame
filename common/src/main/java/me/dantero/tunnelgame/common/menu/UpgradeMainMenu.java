@@ -7,6 +7,8 @@ import com.gmail.furkanaxx34.dlibrary.transformer.annotations.Exclude;
 import com.gmail.furkanaxx34.dlibrary.transformer.annotations.Names;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -21,13 +23,14 @@ public class UpgradeMainMenu extends BaseMenu {
 
   public static int row = 3;
 
+  @Exclude
+  @Nullable
+  private static UpgradeMainMenu menu;
+
   private UpgradeMainMenu() {
   }
 
-  @Exclude
-  private static UpgradeMainMenu menu;
-
-  public static void loadFile(final Plugin plugin) {
+  public static void loadFile(@NotNull final Plugin plugin) {
     if (UpgradeMainMenu.menu == null) {
       UpgradeMainMenu.menu = new UpgradeMainMenu();
     }
@@ -35,7 +38,7 @@ public class UpgradeMainMenu extends BaseMenu {
     UpgradeMainMenu.menu.load(plugin);
   }
 
-  public static void open(Player player) {
+  public static void open(@NotNull Player player) {
     Objects.requireNonNull(menu, "initiate first!");
   }
 }
