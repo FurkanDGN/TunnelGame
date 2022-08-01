@@ -1,4 +1,4 @@
 name: TunnelGame
 version: '${version}'
-main: me.dantero.tunnelgame.TunnelGame
+main: me.dantero.tunnelgame.plugin.TunnelGame
 api-version: 1.19

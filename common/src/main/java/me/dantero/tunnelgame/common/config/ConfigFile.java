@@ -15,6 +15,8 @@ import java.io.File;
 @Names(modifier = Names.Modifier.TO_LOWER_CASE, strategy = Names.Strategy.HYPHEN_CASE)
 public class ConfigFile extends TransformedObject {
 
+  public static int maxPlayers = 10;
+
   @Exclude
   private static TransformedObject instance;
 

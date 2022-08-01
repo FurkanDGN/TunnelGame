@@ -5,5 +5,10 @@ package me.dantero.tunnelgame.common.game;
  */
 public interface Level {
 
+  void prepare();
+
+  void startLevel();
+
+  void clearLevel();
 
 }

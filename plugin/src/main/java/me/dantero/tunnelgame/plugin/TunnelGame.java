@@ -1,4 +1,4 @@
-package me.dantero.tunnelgame;
+package me.dantero.tunnelgame.plugin;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
