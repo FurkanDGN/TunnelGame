@@ -5,9 +5,13 @@ import com.gmail.furkanaxx34.dlibrary.transformer.TransformedObject;
 import com.gmail.furkanaxx34.dlibrary.transformer.TransformerPool;
 import com.gmail.furkanaxx34.dlibrary.transformer.annotations.Exclude;
 import com.gmail.furkanaxx34.dlibrary.transformer.annotations.Names;
+import me.dantero.tunnelgame.common.Constants;
+import org.bukkit.Location;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 
 import java.io.File;
+import java.util.Objects;
 
 /**
  * @author Furkan Doğan
@@ -17,16 +21,38 @@ public class ConfigFile extends TransformedObject {
 
   public static int maxPlayers = 10;
 
+  public static int startCountdown = 20;
+
   @Exclude
   private static TransformedObject instance;
 
+  @Exclude
+  private static YamlConfiguration configuration;
+
   public static void loadFile(final Plugin plugin) {
     if (ConfigFile.instance == null) {
+      File configPath = new File(plugin.getDataFolder(), "config.yml");
       ConfigFile.instance = TransformerPool.create(new ConfigFile())
-        .withFile(new File(plugin.getDataFolder(), "config.yml"))
+        .withFile(configPath)
         .withResolver(new BukkitSnakeyaml());
+      configuration = YamlConfiguration.loadConfiguration(configPath);
     }
 
     ConfigFile.instance.initiate();
+  }
+
+  public static Location getSpawnPoint() {
+    Objects.requireNonNull(configuration, "initiate first!");
+    return configuration.getLocation(Constants.SPAWN_POINT);
+  }
+
+  public static void setSpawnPoint(Location location) {
+    Objects.requireNonNull(configuration, "initiate first!");
+    configuration.set(Constants.SPAWN_POINT, location);
+  }
+
+  public static YamlConfiguration getConfiguration() {
+    Objects.requireNonNull(configuration, "initiate first!");
+    return configuration;
   }
 }

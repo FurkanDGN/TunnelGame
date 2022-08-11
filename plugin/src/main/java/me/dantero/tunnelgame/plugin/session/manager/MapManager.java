@@ -25,6 +25,10 @@ public class MapManager {
     this.worldName = FilenameUtil.withoutExtension(worldPath);
   }
 
+  public String getWorldName() {
+    return this.worldName;
+  }
+
   public void reloadMap() {
     try {
       this.worldManager.deleteWorld(this.worldName);

@@ -19,7 +19,7 @@ import java.util.UUID;
 /**
  * @author Furkan Doğan
  */
-public final class PlayerStore {
+public final class PlayerInventoryStore {
 
   private final Map<UUID, byte[]> inventoryMap = new HashMap<>();
   private final Map<UUID, Location> locationMap  = new HashMap<>();
