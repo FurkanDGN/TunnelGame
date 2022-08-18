@@ -37,4 +37,8 @@ public final class LocationUtil {
     return location.getWorld().getHighestBlockAt(location).getY();
   }
 
+  public static boolean isNewLocation(Location now, Location last) {
+    return now.getBlock().getLocation().equals(last.getBlock().getLocation());
+  }
+
 }

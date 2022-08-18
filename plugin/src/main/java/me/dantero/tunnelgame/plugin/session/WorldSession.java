@@ -11,7 +11,7 @@ import me.dantero.tunnelgame.common.game.state.JoinResultState;
 import me.dantero.tunnelgame.common.manager.WorldManager;
 import me.dantero.tunnelgame.common.util.FilenameUtil;
 import me.dantero.tunnelgame.plugin.session.manager.MapManager;
-import me.dantero.tunnelgame.plugin.session.manager.PlayerInventoryStore;
+import me.dantero.tunnelgame.plugin.session.manager.PlayerInventoryStoreManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -34,12 +34,13 @@ public class WorldSession implements Session {
   private static final AtomicInteger SESSION_ID = new AtomicInteger(0);
 
   private final Set<UUID> players = new HashSet<>();
-  private final PlayerInventoryStore playerInventoryStore = new PlayerInventoryStore();
+  private final PlayerInventoryStoreManager playerInventoryStoreManager = new PlayerInventoryStoreManager();
   private final MapManager mapManager;
   private final LevelConfiguration levelConfiguration;
   private final String worldName;
   private GameState gameState = GameState.WAITING;
   private int currentLevel = 1;
+  private boolean paused;
 
   public WorldSession(File worldRecoverPath,
                       WorldManager worldManager,
@@ -65,6 +66,11 @@ public class WorldSession implements Session {
     this.teleportPlayers(spawnPoint);
 
     this.startCountdown();
+  }
+
+  @Override
+  public void togglePause() {
+    this.paused = !this.paused;
   }
 
   @Override
@@ -116,6 +122,11 @@ public class WorldSession implements Session {
   }
 
   @Override
+  public boolean isPaused() {
+    return this.paused;
+  }
+
+  @Override
   public Set<Player> players() {
     return this.players.stream()
       .map(Bukkit::getPlayer)
@@ -124,7 +135,7 @@ public class WorldSession implements Session {
 
   private void joinPlayer(Player player) {
     this.players.add(player.getUniqueId());
-    this.playerInventoryStore.savePlayer(player);
+    this.playerInventoryStoreManager.savePlayer(player);
   }
 
   private File buildWorldPath(File file) {
@@ -136,7 +147,7 @@ public class WorldSession implements Session {
   private void resetPlayers() {
     this.players.clear();
     this.players().forEach(player -> {
-      this.playerInventoryStore.resetPlayer(player);
+      this.playerInventoryStoreManager.resetPlayer(player);
       player.kickPlayer("Game stopped.");
     });
   }

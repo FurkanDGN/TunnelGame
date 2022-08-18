@@ -5,6 +5,8 @@ import com.gmail.furkanaxx34.dlibrary.transformer.TransformedObject;
 import com.gmail.furkanaxx34.dlibrary.transformer.TransformerPool;
 import com.gmail.furkanaxx34.dlibrary.transformer.annotations.Exclude;
 import com.gmail.furkanaxx34.dlibrary.transformer.annotations.Names;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import me.dantero.tunnelgame.common.Constants;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -16,6 +18,7 @@ import java.util.Objects;
 /**
  * @author Furkan Doğan
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Names(modifier = Names.Modifier.TO_LOWER_CASE, strategy = Names.Strategy.HYPHEN_CASE)
 public class ConfigFile extends TransformedObject {
 
@@ -43,12 +46,12 @@ public class ConfigFile extends TransformedObject {
 
   public static Location getSpawnPoint() {
     Objects.requireNonNull(configuration, "initiate first!");
-    return configuration.getLocation(Constants.SPAWN_POINT);
+    return configuration.getLocation(Constants.SPAWN_POINT_KEY);
   }
 
   public static void setSpawnPoint(Location location) {
     Objects.requireNonNull(configuration, "initiate first!");
-    configuration.set(Constants.SPAWN_POINT, location);
+    configuration.set(Constants.SPAWN_POINT_KEY, location);
   }
 
   public static YamlConfiguration getConfiguration() {

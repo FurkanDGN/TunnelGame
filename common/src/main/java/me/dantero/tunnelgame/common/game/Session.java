@@ -15,6 +15,8 @@ public interface Session {
 
   void start();
 
+  void togglePause();
+
   void stop();
 
   void handleLevelPass();
@@ -27,6 +29,7 @@ public interface Session {
 
   boolean isStarted();
 
-  Set<Player> players();
+  boolean isPaused();
 
+  Set<Player> players();
 }
