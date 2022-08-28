@@ -9,6 +9,8 @@ import org.bukkit.NamespacedKey;
 @SuppressWarnings("SpellCheckingInspection")
 public interface Constants {
 
+  String CONTEXT_KEY_FORMAT = "%s-%s";
+
   String SPAWN_POINT_KEY = "spawnpoint";
 
   String ADMIN_PERMISSION = "tunnelgame.admin";

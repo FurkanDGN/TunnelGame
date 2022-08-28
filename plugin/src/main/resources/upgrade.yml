@@ -1,0 +1,6 @@
+self-armor-upgrades:
+  level-1:
+    required-points: 50
+    equipment:
+      DIAMOND_HELMET:
+        slot: "CHEST"

@@ -81,10 +81,10 @@ public class UpgradeConfigFile extends TransformedObject {
     for (String key : section.getKeys(false)) {
       Matcher matcher = levelPattern.matcher(key);
       if (!matcher.matches()) continue;
-
       int level = Integer.parseInt(matcher.group("level"));
+
       String equipmentFormat = String.format("%s.equipment", key);
-      String requiredPointsFormat = String.format("%s.points", key);
+      String requiredPointsFormat = String.format("%s.required-points", key);
 
       int points = section.getInt(requiredPointsFormat, 0);
       ConfigurationSection configurationSection = section.getConfigurationSection(equipmentFormat);

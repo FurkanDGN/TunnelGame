@@ -10,9 +10,9 @@ import org.bukkit.entity.Player;
  */
 public final class ControlUtils {
 
-  public static boolean isClose(ModifiedEntity entity, Player player, int activationRange) {
+  public static boolean isClose(ModifiedEntity modifiedEntity, Player player, int activationRange) {
 
-    final LivingEntity livingEntity = (LivingEntity) entity.entity();
+    final LivingEntity livingEntity = (LivingEntity) modifiedEntity.entity();
 
     final Location entityLocation = livingEntity.getLocation();
     final Location playerLocation = player.getLocation();

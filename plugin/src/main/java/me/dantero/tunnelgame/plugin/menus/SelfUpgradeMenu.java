@@ -70,7 +70,7 @@ public class SelfUpgradeMenu extends BaseMenu {
 
   public static void open(Player player) {
     Objects.requireNonNull(menu, "initiate first!");
-    menu.openPage(player, row, "kos-gui", title, initEvent -> {
+    menu.openPage(player, row, "self-upgrade-gui", title, initEvent -> {
       InventoryContents contents = initEvent.contents();
 
     });

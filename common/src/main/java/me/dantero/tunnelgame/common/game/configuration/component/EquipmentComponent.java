@@ -1,5 +1,6 @@
 package me.dantero.tunnelgame.common.game.configuration.component;
 
+import me.dantero.tunnelgame.common.InventorySlot;
 import me.dantero.tunnelgame.common.util.EnchantUtil;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -11,12 +12,13 @@ import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 public final class EquipmentComponent {
 
-  private final Map<EquipmentSlot, ItemStack> equipment = new HashMap<>();
+  private final Map<InventorySlot, ItemStack> equipment = new HashMap<>();
 
   public EquipmentComponent(final ConfigurationSection configurationSection) {
     if (configurationSection == null) {
@@ -38,19 +40,23 @@ public final class EquipmentComponent {
         item.addEnchantment(enchantment, level);
       }
 
-      this.equipment.put(EquipmentSlot.valueOf(itemSection.getString("slot")), item);
+      this.equipment.put(InventorySlot.fromString(itemSection.getString("slot")), item);
     }
+  }
+
+  public Map<InventorySlot, ItemStack> getEquipment() {
+    return Collections.unmodifiableMap(this.equipment);
   }
 
   public void apply(final Entity entity) {
     this.equipment.forEach((equipmentSlot, itemStack) -> {
       if (entity instanceof final Player player)
-        player.getInventory().setItem(equipmentSlot, itemStack);
+        player.getInventory().setItem(equipmentSlot.slot(), itemStack);
       else if (entity instanceof final LivingEntity livingEntity) {
         final EntityEquipment equipment = livingEntity.getEquipment();
         if (equipment == null) return;
 
-        equipment.setItem(equipmentSlot, itemStack);
+        equipment.setItem(equipmentSlot.asEquipmentSlot(), itemStack);
       }
     });
   }

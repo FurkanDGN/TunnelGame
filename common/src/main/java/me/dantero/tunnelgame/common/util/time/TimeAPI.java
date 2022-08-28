@@ -16,7 +16,8 @@ public final class TimeAPI {
   private static final int SECONDS_IN_HOUR = 3600;
   private static final int SECONDS_IN_MINUTE = 60;
 
-  public @NotNull String formatTime(Long input) {
+  @NotNull
+  public String formatTime(Long input) {
     final StringBuilder result = new StringBuilder();
 
     if (input != null) {
@@ -35,7 +36,8 @@ public final class TimeAPI {
     return result.toString();
   }
 
-  public @NotNull TimeResult parseTime(final String input) {
+  @NotNull
+  public TimeResult parseTime(final String input) {
     if (input == null) return new TimeResult(0L);
 
     long seconds = 0L;

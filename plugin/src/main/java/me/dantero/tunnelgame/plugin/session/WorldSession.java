@@ -4,6 +4,7 @@ import com.gmail.furkanaxx34.dlibrary.bukkit.location.RandomUtil;
 import com.gmail.furkanaxx34.dlibrary.bukkit.utils.TaskUtilities;
 import me.dantero.tunnelgame.common.config.ConfigFile;
 import me.dantero.tunnelgame.common.game.Session;
+import me.dantero.tunnelgame.common.game.SessionContext;
 import me.dantero.tunnelgame.common.game.configuration.LevelConfiguration;
 import me.dantero.tunnelgame.common.game.configuration.ModifiedEntitySetting;
 import me.dantero.tunnelgame.common.game.state.GameState;
@@ -19,12 +20,8 @@ import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 
 import java.io.File;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * @author Furkan Doğan
@@ -33,14 +30,9 @@ public class WorldSession implements Session {
 
   private static final AtomicInteger SESSION_ID = new AtomicInteger(0);
 
-  private final Set<UUID> players = new HashSet<>();
-  private final PlayerInventoryStoreManager playerInventoryStoreManager = new PlayerInventoryStoreManager();
   private final MapManager mapManager;
   private final LevelConfiguration levelConfiguration;
-  private final String worldName;
-  private GameState gameState = GameState.WAITING;
-  private int currentLevel = 1;
-  private boolean paused;
+  private final SessionContext sessionContext;
 
   public WorldSession(File worldRecoverPath,
                       WorldManager worldManager,
@@ -48,7 +40,9 @@ public class WorldSession implements Session {
     File worldPath = this.buildWorldPath(worldRecoverPath);
     this.mapManager = new MapManager(worldPath, worldRecoverPath, worldManager);
     this.levelConfiguration = levelConfiguration;
-    this.worldName = this.mapManager.getWorldName();
+    String worldName = this.mapManager.getWorldName();
+    PlayerInventoryStoreManager playerInventoryStoreManager = new PlayerInventoryStoreManager();
+    this.sessionContext = new DefaultSessionContext(worldName, playerInventoryStoreManager);
   }
 
   @Override
@@ -59,10 +53,10 @@ public class WorldSession implements Session {
 
   @Override
   public void start() {
-    this.gameState = GameState.STARTING;
+    this.sessionContext.setGameState(GameState.STARTING);
 
     Location spawnPoint = ConfigFile.getSpawnPoint();
-    spawnPoint.setWorld(Bukkit.getWorld(this.worldName));
+    spawnPoint.setWorld(Bukkit.getWorld(this.sessionContext.getWorldName()));
     this.teleportPlayers(spawnPoint);
 
     this.startCountdown();
@@ -70,72 +64,30 @@ public class WorldSession implements Session {
 
   @Override
   public void togglePause() {
-    this.paused = !this.paused;
+    this.sessionContext.togglePause();
   }
 
   @Override
   public void stop() {
     SESSION_ID.decrementAndGet();
-    this.resetPlayers();
-    this.gameState = GameState.WAITING;
+    this.sessionContext.clear();
   }
 
   @Override
   public void handleLevelPass() {
-    Objects.requireNonNull(Bukkit.getWorld(this.worldName)).getLivingEntities()
+    Objects.requireNonNull(Bukkit.getWorld(this.sessionContext.getWorldName())).getLivingEntities()
       .stream()
       .filter(livingEntity -> livingEntity instanceof Monster)
       .peek(livingEntity -> livingEntity.setHealth(0))
       .forEach(Entity::remove);
 
-    this.levelConfiguration.levelEntities().get(++this.currentLevel).forEach(this::spawnEntity);
-  }
-
-  @Override
-  public GameState getGameState() {
-    return this.gameState;
+    int level = this.sessionContext.getCurrentLevel().incrementAndGet();
+    this.levelConfiguration.levelEntities().get(level).forEach(this::spawnEntity);
   }
 
   @Override
   public JoinResultState tryJoinPlayer(Player player) {
-    UUID uniqueId = player.getUniqueId();
-
-    if (this.players.size() >= ConfigFile.maxPlayers) {
-      return JoinResultState.GAME_FULL;
-    }
-    if (this.players.contains(uniqueId)) {
-      return JoinResultState.ALREADY_IN_GAME;
-    }
-
-    this.joinPlayer(player);
-    return JoinResultState.SUCCESSFUL;
-  }
-
-  @Override
-  public boolean isInGame(Player player) {
-    return this.players.contains(player.getUniqueId());
-  }
-
-  @Override
-  public boolean isStarted() {
-    return false;
-  }
-
-  @Override
-  public boolean isPaused() {
-    return this.paused;
-  }
-
-  @Override
-  public Set<Player> players() {
-    return this.players.stream()
-      .map(Bukkit::getPlayer)
-      .collect(Collectors.toSet());
-  }
-
-  private void joinPlayer(Player player) {
-    this.players.add(player.getUniqueId());
-    this.playerInventoryStoreManager.savePlayer(player);
+    return this.sessionContext.tryJoinPlayer(player);
   }
 
   private File buildWorldPath(File file) {
@@ -144,22 +96,19 @@ public class WorldSession implements Session {
     return new File(Bukkit.getWorldContainer(), fileName);
   }
 
-  private void resetPlayers() {
-    this.players.clear();
-    this.players().forEach(player -> {
-      this.playerInventoryStoreManager.resetPlayer(player);
-      player.kickPlayer("Game stopped.");
-    });
-  }
-
   private void startCountdown() {
     AtomicInteger countdown = new AtomicInteger(ConfigFile.startCountdown);
     TaskUtilities.syncTimer(20, bukkitRunnable -> {
       if (countdown.getAndDecrement() <= 0) {
-        this.gameState = GameState.IN_GAME;
+        this.sessionContext.setGameState(GameState.IN_GAME);
         bukkitRunnable.cancel();
       }
     });
+  }
+
+  @Override
+  public SessionContext getSessionContext() {
+    return this.sessionContext;
   }
 
   private void spawnEntity(ModifiedEntitySetting modifiedEntitySetting) {
@@ -167,8 +116,8 @@ public class WorldSession implements Session {
   }
 
   private void teleportPlayers(Location location) {
-    this.players.stream()
-      .map(Bukkit::getPlayer)
+    this.sessionContext.getPlayers()
+      .stream()
       .filter(Objects::nonNull)
       .forEach(player -> player.teleport(location.clone().add(RandomUtil.RANDOM.nextDouble(2), 0, RandomUtil.RANDOM.nextDouble(2))));
   }

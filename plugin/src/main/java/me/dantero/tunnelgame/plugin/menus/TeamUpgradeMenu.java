@@ -61,7 +61,7 @@ public class TeamUpgradeMenu extends BaseMenu {
 
   public static void open(Player player) {
     Objects.requireNonNull(menu, "initiate first!");
-    menu.openPage(player, row, "kos-gui", title, initEvent -> {
+    menu.openPage(player, row, "team-upgrade-gui", title, initEvent -> {
       InventoryContents contents = initEvent.contents();
 
     });
