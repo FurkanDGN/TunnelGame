@@ -9,7 +9,7 @@ import org.bukkit.NamespacedKey;
 @SuppressWarnings("SpellCheckingInspection")
 public interface Constants {
 
-  String CONTEXT_KEY_FORMAT = "%s-%s";
+  String UPGRADES_KEY_FORMAT = "%s-%s";
 
   String SPAWN_POINT_KEY = "spawnpoint";
 

@@ -2,6 +2,7 @@ package me.dantero.tunnelgame.common.game;
 
 import me.dantero.tunnelgame.common.game.state.GameState;
 import me.dantero.tunnelgame.common.game.state.JoinResultState;
+import me.dantero.tunnelgame.common.upgrade.Upgrade;
 import org.bukkit.entity.Player;
 
 import java.util.Set;
@@ -13,15 +14,18 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public interface SessionContext {
 
-  void upgradePlayer(UUID uniqueId, String upgradeKey, int level);
+  void upgradePlayer(UUID uniqueId, Upgrade upgrade, int level);
 
-  void upgradeTeam(String team, String upgradeKey, int level);
+  void upgradeTeam(Upgrade upgrade, int level);
 
-  GameState getGameState();
+  int getPlayerUpgrade(UUID uniqueId, Upgrade upgrade);
+
+  int getTeamUpgrade(Upgrade upgrade);
 
   JoinResultState tryJoinPlayer(Player player);
 
   boolean isInGame(UUID uniqueId);
+
   boolean isInGame(Player player);
 
   boolean isStarted();
@@ -32,9 +36,11 @@ public interface SessionContext {
 
   void togglePause();
 
-  Set<Player> getPlayers();
+  GameState getGameState();
 
   void setGameState(GameState gameState);
+
+  Set<Player> getPlayers();
 
   String getWorldName();
 

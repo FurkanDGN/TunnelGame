@@ -1,16 +1,16 @@
 package me.dantero.tunnelgame.plugin.session;
 
+import me.dantero.tunnelgame.common.Constants;
 import me.dantero.tunnelgame.common.config.ConfigFile;
 import me.dantero.tunnelgame.common.game.SessionContext;
 import me.dantero.tunnelgame.common.game.state.GameState;
 import me.dantero.tunnelgame.common.game.state.JoinResultState;
+import me.dantero.tunnelgame.common.upgrade.Upgrade;
 import me.dantero.tunnelgame.plugin.session.manager.PlayerInventoryStoreManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -19,15 +19,20 @@ import java.util.stream.Collectors;
  */
 public class DefaultSessionContext implements SessionContext {
 
+  private final Map<String, Integer> playerUpgrades;
+  private final Map<String, Integer> teamUpgrades;
   private final Set<UUID> players;
   private final String worldName;
   private final PlayerInventoryStoreManager playerInventoryStoreManager;
   private final AtomicInteger currentLevel;
-  private final Object lock = new Object();
+  private final Object stateLock = new Object();
+  private final Object upgradeLock = new Object();
   private GameState gameState;
   private boolean paused;
 
   public DefaultSessionContext(String worldName, PlayerInventoryStoreManager playerInventoryStoreManager) {
+    this.playerUpgrades = new HashMap<>();
+    this.teamUpgrades = new HashMap<>();
     this.players = new HashSet<>();
     this.worldName = worldName;
     this.playerInventoryStoreManager = playerInventoryStoreManager;
@@ -36,13 +41,38 @@ public class DefaultSessionContext implements SessionContext {
   }
 
   @Override
-  public void upgradePlayer(UUID uniqueId, String upgradeKey, int level) {
-
+  public void upgradePlayer(UUID uniqueId, Upgrade upgrade, int level) {
+    synchronized (this.upgradeLock) {
+      String id = uniqueId.toString();
+      String upgradeName = upgrade.getName();
+      String key = Constants.UPGRADES_KEY_FORMAT.formatted(id, upgradeName);
+      this.playerUpgrades.put(key, level);
+    }
   }
 
   @Override
-  public void upgradeTeam(String team, String upgradeKey, int level) {
+  public void upgradeTeam(Upgrade upgrade, int level) {
+    synchronized (this.upgradeLock) {
+      String upgradeName = upgrade.getName();
+      this.teamUpgrades.put(upgradeName, level);
+    }
+  }
 
+  @Override
+  public int getPlayerUpgrade(UUID uniqueId, Upgrade upgrade) {
+    synchronized (this.upgradeLock) {
+      String upgradeName = upgrade.getName();
+      String key = Constants.UPGRADES_KEY_FORMAT.formatted(uniqueId.toString(), upgradeName);
+      return this.playerUpgrades.get(key);
+    }
+  }
+
+  @Override
+  public int getTeamUpgrade(Upgrade upgrade) {
+    synchronized (this.upgradeLock) {
+      String upgradeName = upgrade.getName();
+      return this.teamUpgrades.get(upgradeName);
+    }
   }
 
   @Override
@@ -99,14 +129,14 @@ public class DefaultSessionContext implements SessionContext {
 
   @Override
   public GameState getGameState() {
-    synchronized (this.lock) {
+    synchronized (this.stateLock) {
       return this.gameState;
     }
   }
 
   @Override
   public void setGameState(GameState gameState) {
-    synchronized (this.lock) {
+    synchronized (this.stateLock) {
       this.gameState = gameState;
     }
   }

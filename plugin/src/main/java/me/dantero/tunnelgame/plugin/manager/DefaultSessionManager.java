@@ -25,11 +25,11 @@ public class DefaultSessionManager implements SessionManager {
 
   @Override
   public boolean isInGame(Player player) {
-    return SESSIONS.stream().anyMatch(session -> session.isInGame(player));
+    return SESSIONS.stream().anyMatch(session -> session.getSessionContext().isInGame(player));
   }
 
   @Override
   public Optional<Session> getSession(Player player) {
-    return SESSIONS.stream().filter(session -> session.isInGame(player)).findFirst();
+    return SESSIONS.stream().filter(session -> session.getSessionContext().isInGame(player)).findFirst();
   }
 }
