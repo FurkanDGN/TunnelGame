@@ -5,9 +5,12 @@ import me.dantero.tunnelgame.common.config.ConfigFile;
 import me.dantero.tunnelgame.common.game.SessionContext;
 import me.dantero.tunnelgame.common.game.state.GameState;
 import me.dantero.tunnelgame.common.game.state.JoinResultState;
-import me.dantero.tunnelgame.common.upgrade.Upgrade;
+import me.dantero.tunnelgame.common.manager.PointManager;
+import me.dantero.tunnelgame.common.upgrade.UpgradeType;
+import me.dantero.tunnelgame.plugin.manager.DefaultPointManager;
 import me.dantero.tunnelgame.plugin.session.manager.PlayerInventoryStoreManager;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 
 import java.util.*;
@@ -19,6 +22,7 @@ import java.util.stream.Collectors;
  */
 public class DefaultSessionContext implements SessionContext {
 
+  private final PointManager pointManager;
   private final Map<String, Integer> playerUpgrades;
   private final Map<String, Integer> teamUpgrades;
   private final Set<UUID> players;
@@ -31,6 +35,7 @@ public class DefaultSessionContext implements SessionContext {
   private boolean paused;
 
   public DefaultSessionContext(String worldName, PlayerInventoryStoreManager playerInventoryStoreManager) {
+    this.pointManager = new DefaultPointManager();
     this.playerUpgrades = new HashMap<>();
     this.teamUpgrades = new HashMap<>();
     this.players = new HashSet<>();
@@ -41,37 +46,37 @@ public class DefaultSessionContext implements SessionContext {
   }
 
   @Override
-  public void upgradePlayer(UUID uniqueId, Upgrade upgrade, int level) {
+  public void upgradePlayer(UUID uniqueId, UpgradeType upgradeType) {
     synchronized (this.upgradeLock) {
       String id = uniqueId.toString();
-      String upgradeName = upgrade.getName();
+      String upgradeName = upgradeType.getName();
       String key = Constants.UPGRADES_KEY_FORMAT.formatted(id, upgradeName);
-      this.playerUpgrades.put(key, level);
+      this.playerUpgrades.compute(key, (s, level) -> level == null ? 1 : level + 1);
     }
   }
 
   @Override
-  public void upgradeTeam(Upgrade upgrade, int level) {
+  public void upgradeTeam(UpgradeType upgradeType) {
     synchronized (this.upgradeLock) {
-      String upgradeName = upgrade.getName();
-      this.teamUpgrades.put(upgradeName, level);
+      String upgradeName = upgradeType.getName();
+      this.teamUpgrades.compute(upgradeName, (s, level) -> level == null ? 1 : level + 1);
     }
   }
 
   @Override
-  public int getPlayerUpgrade(UUID uniqueId, Upgrade upgrade) {
+  public int getPlayerUpgrade(UUID uniqueId, UpgradeType upgradeType) {
     synchronized (this.upgradeLock) {
-      String upgradeName = upgrade.getName();
+      String upgradeName = upgradeType.getName();
       String key = Constants.UPGRADES_KEY_FORMAT.formatted(uniqueId.toString(), upgradeName);
-      return this.playerUpgrades.get(key);
+      return this.playerUpgrades.getOrDefault(key, 0);
     }
   }
 
   @Override
-  public int getTeamUpgrade(Upgrade upgrade) {
+  public int getTeamUpgrade(UpgradeType upgradeType) {
     synchronized (this.upgradeLock) {
-      String upgradeName = upgrade.getName();
-      return this.teamUpgrades.get(upgradeName);
+      String upgradeName = upgradeType.getName();
+      return this.teamUpgrades.getOrDefault(upgradeName, 0);
     }
   }
 
@@ -102,7 +107,7 @@ public class DefaultSessionContext implements SessionContext {
 
   @Override
   public boolean isStarted() {
-    return false;
+    return !this.paused;
   }
 
   @Override
@@ -118,6 +123,11 @@ public class DefaultSessionContext implements SessionContext {
   @Override
   public void togglePause() {
     this.paused = !this.paused;
+  }
+
+  @Override
+  public PointManager getPointManager() {
+    return this.pointManager;
   }
 
   @Override
@@ -149,9 +159,12 @@ public class DefaultSessionContext implements SessionContext {
   @Override
   public void clear() {
     this.players.clear();
-    this.gameState = GameState.WAITING;
+    this.gameState = GameState.ENDED;
     this.getPlayers().forEach(player -> {
+      player.getInventory().clear();
+      player.updateInventory();
       this.playerInventoryStoreManager.resetPlayer(player);
+      player.updateInventory();
       player.kickPlayer("Game stopped.");
     });
   }
@@ -159,5 +172,8 @@ public class DefaultSessionContext implements SessionContext {
   private void joinPlayer(Player player) {
     this.players.add(player.getUniqueId());
     this.playerInventoryStoreManager.savePlayer(player);
+    player.getInventory().clear();
+    player.updateInventory();
+    player.setGameMode(GameMode.SURVIVAL);
   }
 }

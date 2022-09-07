@@ -3,7 +3,7 @@ package me.dantero.tunnelgame.common.upgrade;
 /**
  * @author Furkan Doğan
  */
-public enum Upgrade {
+public enum UpgradeType {
 
   ARMOR("armor"),
   FOOD("food"),
@@ -13,7 +13,7 @@ public enum Upgrade {
 
   private final String name;
 
-  Upgrade(String name) {
+  UpgradeType(String name) {
     this.name = name;
   }
 

@@ -1,0 +1,99 @@
+self-armor-upgrades:
+  level-1:
+    icon: "LEATHER_HELMET"
+    required-points: 5
+    equipment:
+      LEATHER_HELMET:
+        slot: "HEAD"
+      LEATHER_CHESTPLATE:
+        slot: "CHEST"
+      LEATHER_LEGGINGS:
+        slot: "LEGS"
+      LEATHER_BOOTS:
+        slot: "FEET"
+  level-2:
+    icon: "CHAINMAIL_HELMET"
+    required-points: 10
+    equipment:
+      CHAINMAIL_HELMET:
+        slot: "HEAD"
+      CHAINMAIL_CHESTPLATE:
+        slot: "CHEST"
+      CHAINMAIL_LEGGINGS:
+        slot: "LEGS"
+      CHAINMAIL_BOOTS:
+        slot: "FEET"
+  level-3:
+    icon: "IRON_HELMET"
+    required-points: 20
+    equipment:
+      IRON_HELMET:
+        slot: "HEAD"
+      IRON_CHESTPLATE:
+        slot: "CHEST"
+      IRON_LEGGINGS:
+        slot: "LEGS"
+      IRON_BOOTS:
+        slot: "FEET"
+  level-4:
+    icon: "DIAMOND_HELMET"
+    required-points: 30
+    equipment:
+      DIAMOND_HELMET:
+        slot: "HEAD"
+      DIAMOND_CHESTPLATE:
+        slot: "CHEST"
+      DIAMOND_LEGGINGS:
+        slot: "LEGS"
+      DIAMOND_BOOTS:
+        slot: "FEET"
+
+self-food-upgrades:
+  level-1:
+    icon: "BREAD"
+    required-points: 2
+    equipment:
+      BREAD:
+        amount: 10
+        slot: 1
+  level-2:
+    icon: "COOKED_CHICKEN"
+    required-points: 8
+    equipment:
+      COOKED_CHICKEN:
+        amount: 10
+        slot: 1
+
+self-weapon-upgrades:
+  level-1:
+    icon: "IRON_SWORD"
+    required-points: 10
+    equipment:
+      IRON_SWORD:
+        slot: "HAND"
+  level-2:
+    icon: "DIAMOND_SWORD"
+    required-points: 20
+    equipment:
+      DIAMOND_SWORD:
+        slot: "HAND"
+
+team-sharpness-upgrades:
+  level-1:
+    icon: "GRAY_CONCRETE"
+    required-points: 5
+    enchant-level: 1
+  level-2:
+    icon: "RED_CONCRETE"
+    required-points: 10
+    enchant-level: 2
+
+team-protection-upgrades:
+  level-1:
+    icon: "GRAY_CONCRETE"
+    required-points: 5
+    enchant-level: 2
+  level-2:
+    icon: "RED_CONCRETE"
+    required-points: 10
+    enchant-level: 2

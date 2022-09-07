@@ -20,20 +20,21 @@ public final class ModifiedEntitySetting {
   private final TriggerAttribute triggerAttribute;
   private final Map<Attribute, Double> entityAttributes = new HashMap<>();
   private final AmmoAttribute ammoAttribute;
-
   private final EntityType entityType;
   private final String entityDisplayName;
   private final boolean selfDamageResistance;
-
   private final String identifier;
 
-  public ModifiedEntitySetting(final String identifier, final @NotNull FileConfiguration config) {
+  private final int count;
+
+  public ModifiedEntitySetting(final String identifier, final @NotNull ConfigurationSection config) {
     this.identifier = identifier;
     this.ammoAttribute = new AmmoAttribute(config);
     this.entityType = EntityType.valueOf(config.getString("type"));
     this.selfDamageResistance = config.getString("damage-resistance", "false").equalsIgnoreCase("SELF");
     this.entityDisplayName = config.getString("display-name");
     this.equipmentComponent = new EquipmentComponent(config.getConfigurationSection("equipment"));
+    this.count = config.getInt("count", 1);
 
     final List<String> attributes = config.getStringList("attribute");
     if (!attributes.isEmpty()) {
@@ -56,8 +57,12 @@ public final class ModifiedEntitySetting {
     }
   }
 
-  public ModifiedEntity create(final Location location) {
-    return new ModifiedEntity(this, location);
+  public ModifiedEntity create(@NotNull final String worldName) {
+    return new ModifiedEntity(this, worldName);
+  }
+
+  public int getCount() {
+    return this.count;
   }
 
   TriggerAttribute getTriggerAttribute() {

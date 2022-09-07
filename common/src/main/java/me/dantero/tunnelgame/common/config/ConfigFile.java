@@ -9,11 +9,15 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import me.dantero.tunnelgame.common.Constants;
 import org.bukkit.Location;
+import org.bukkit.block.BlockFace;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 
 import java.io.File;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author Furkan Doğan
@@ -26,36 +30,38 @@ public class ConfigFile extends TransformedObject {
 
   public static int startCountdown = 20;
 
+  public static int upgradeCountdown = 15;
+
+  public static int lowestBlockHeight = 70;
+
+  public static int killRewardPoints = 20;
+
+  public static BlockFace gameDirection = BlockFace.WEST;
+
   @Exclude
   private static TransformedObject instance;
 
-  @Exclude
-  private static YamlConfiguration configuration;
-
   public static void loadFile(final Plugin plugin) {
+    File configPath = new File(plugin.getDataFolder(), "config.yml");
     if (ConfigFile.instance == null) {
-      File configPath = new File(plugin.getDataFolder(), "config.yml");
       ConfigFile.instance = TransformerPool.create(new ConfigFile())
         .withFile(configPath)
         .withResolver(new BukkitSnakeyaml());
-      configuration = YamlConfiguration.loadConfiguration(configPath);
     }
 
     ConfigFile.instance.initiate();
   }
 
   public static Location getSpawnPoint() {
-    Objects.requireNonNull(configuration, "initiate first!");
-    return configuration.getLocation(Constants.SPAWN_POINT_KEY);
-  }
-
-  public static void setSpawnPoint(Location location) {
-    Objects.requireNonNull(configuration, "initiate first!");
-    configuration.set(Constants.SPAWN_POINT_KEY, location);
-  }
-
-  public static YamlConfiguration getConfiguration() {
-    Objects.requireNonNull(configuration, "initiate first!");
-    return configuration;
+    Objects.requireNonNull(ConfigFile.instance, "initiate first!");
+    Optional<Map> locationMap = ConfigFile.instance.get(Constants.SPAWN_POINT_KEY, Map.class);
+    return locationMap.map(map -> {
+      double x = Double.parseDouble(map.get("x").toString());
+      double y = Double.parseDouble(map.get("y").toString());
+      double z = Double.parseDouble(map.get("z").toString());
+      float yaw = Float.parseFloat(map.get("yaw").toString());
+      float pitch = Float.parseFloat(map.get("pitch").toString());
+      return new Location(null, x, y, z, yaw, pitch);
+    }).orElse(null);
   }
 }

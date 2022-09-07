@@ -1,0 +1,203 @@
+level-1:
+  goal-distance: 21
+  entities:
+    skeleton-hawkeye:
+      display-name: "&cHawkeye"
+      type: SKELETON
+      count: 2
+
+      attribute:
+        - "GENERIC_ATTACK_SPEED:3"
+    skeleton-shooter:
+      display-name: "&cShooter"
+      type: SKELETON
+
+      ammo-attribute:
+        harming:
+          type: HARM
+          level: 1
+          duration: "3sec"
+          chance: 40
+        slowness:
+          type: SLOW
+          level: 2
+          duration: "5sec"
+          chance: 60
+    zombie-leader:
+      display-name: "&cLeader"
+      type: ZOMBIE
+      count: 3
+
+      attribute:
+        - "GENERIC_ATTACK_DAMAGE:0"
+
+      trigger:
+        PLAYER_DISTANCE:
+          action:
+            SPAWN:
+              activation-range: 7
+              target: "SELF"
+              entities:
+                - "ZOMBIE:3"
+    zombie-speedy:
+      display-name: "&cSpeedy"
+      type: ZOMBIE
+      count: 2
+
+      attribute:
+        - "GENERIC_MOVEMENT_SPEED:0.4"
+        - "GENERIC_ATTACK_DAMAGE:2"
+level-2-30:
+  goal-distance: 23
+  entities:
+    skeleton-hawkeye:
+      display-name: "&cHawkeye"
+      type: SKELETON
+      count: 2
+
+      attribute:
+        - "GENERIC_ATTACK_SPEED:3"
+    skeleton-shooter:
+      display-name: "&cShooter"
+      type: SKELETON
+
+      ammo-attribute:
+        harming:
+          type: HARM
+          level: 1
+          duration: "3sec"
+          chance: 40
+        slowness:
+          type: SLOW
+          level: 2
+          duration: "5sec"
+          chance: 60
+    zombie-leader:
+      display-name: "&cLeader"
+      type: ZOMBIE
+      count: 3
+
+      attribute:
+        - "GENERIC_ATTACK_DAMAGE:0"
+
+      trigger:
+        PLAYER_DISTANCE:
+          action:
+            SPAWN:
+              activation-range: 7
+              target: "SELF"
+              entities:
+                - "ZOMBIE:3"
+    zombie-speedy:
+      display-name: "&cSpeedy"
+      type: ZOMBIE
+      count: 2
+
+      attribute:
+        - "GENERIC_MOVEMENT_SPEED:0.4"
+        - "GENERIC_ATTACK_DAMAGE:2"
+level-31-60:
+  goal-distance: 23
+  entities:
+    enderman-thief:
+      display-name: "&bThief"
+      type: ENDERMAN
+
+      attribute:
+        - "GENERIC_ATTACK_DAMAGE:0"
+
+      trigger:
+        PLAYER_DISTANCE:
+          action:
+            STEAL:
+              activation-range: 5
+              amount: 1
+            TELEPORT:
+              activation-range: 3
+              distance: 10
+    skeleton-shooter:
+      display-name: "&cShooter"
+      type: SKELETON
+      count: 3
+
+      ammo-attribute:
+        harming:
+          type: HARM
+          level: 1
+          duration: "3sec"
+          chance: 40
+        slowness:
+          type: SLOW
+          level: 2
+          duration: "5sec"
+          chance: 60
+    zombie-boxer:
+      display-name: "&bBoxer"
+      type: ZOMBIE
+      count: 2
+
+      attribute:
+        - "GENERIC_ATTACK_KNOCKBACK:4"
+    zombie-speedy:
+      display-name: "&cSpeedy"
+      type: ZOMBIE
+
+      attribute:
+        - "GENERIC_MOVEMENT_SPEED:0.4"
+        - "GENERIC_ATTACK_DAMAGE:2"
+level-61-100:
+  goal-distance: 23
+  entities:
+    zombie-defender:
+      display-name: "&dDefender"
+      type: ZOMBIE
+      count: 5
+
+      trigger:
+        ON_DAMAGE:
+          action:
+            REPULSE:
+              power: 2
+    zombie-gravity-guy:
+      display-name: "&dGravityGuy"
+      type: ZOMBIE
+
+      trigger:
+        ON_DAMAGE:
+          action:
+            effect:
+              effect-type: LEVITATION
+              target: "PLAYER"
+              level: 1
+              duration: "3sec"
+    zombie-leader:
+      display-name: "&cLeader"
+      type: ZOMBIE
+
+      attribute:
+        - "GENERIC_ATTACK_DAMAGE:0"
+
+      trigger:
+        PLAYER_DISTANCE:
+          action:
+            SPAWN:
+              activation-range: 7
+              target: "SELF"
+              entities:
+                - "ZOMBIE:3"
+    zombie-speedy:
+      display-name: "&cSpeedy"
+      type: ZOMBIE
+
+      attribute:
+        - "GENERIC_MOVEMENT_SPEED:0.4"
+        - "GENERIC_ATTACK_DAMAGE:2"
+    zombie-lifestealer:
+      display-name: "&dLifestealer"
+      type: ZOMBIE
+
+      trigger:
+        ON_DAMAGE:
+          action:
+            LIFE_STEAL:
+              steal-range: "10:30"

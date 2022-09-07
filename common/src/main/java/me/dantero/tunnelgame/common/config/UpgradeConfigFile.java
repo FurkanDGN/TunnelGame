@@ -5,12 +5,17 @@ import com.gmail.furkanaxx34.dlibrary.transformer.TransformedObject;
 import com.gmail.furkanaxx34.dlibrary.transformer.TransformerPool;
 import com.gmail.furkanaxx34.dlibrary.transformer.annotations.Exclude;
 import com.gmail.furkanaxx34.dlibrary.transformer.annotations.Names;
+import com.gmail.furkanaxx34.dlibrary.xseries.XMaterial;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import me.dantero.tunnelgame.common.Constants;
+import me.dantero.tunnelgame.common.InventorySlot;
 import me.dantero.tunnelgame.common.config.pojo.UpgradeConfig;
 import me.dantero.tunnelgame.common.game.configuration.component.EquipmentComponent;
+import me.dantero.tunnelgame.common.upgrade.ItemEnchantUpgrade;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,9 +32,6 @@ import java.util.regex.Pattern;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Names(modifier = Names.Modifier.TO_LOWER_CASE, strategy = Names.Strategy.HYPHEN_CASE)
 public class UpgradeConfigFile extends TransformedObject {
-
-  @Exclude
-  private static final Pattern levelPattern = Pattern.compile("^level-(?<level>\\d+)");
 
   @Exclude
   public static Map<Integer, UpgradeConfig> selfArmor = new HashMap<>();
@@ -66,8 +68,10 @@ public class UpgradeConfigFile extends TransformedObject {
     selfArmor.putAll(buildEquipmentUpgrades(UpgradePath.SELF_ARMOR));
     selfFood.putAll(buildEquipmentUpgrades(UpgradePath.SELF_FOOD));
     selfWeapon.putAll(buildEquipmentUpgrades(UpgradePath.SELF_WEAPON));
-    teamSharpness.putAll(buildIntegerUpgrades(UpgradePath.TEAM_SHARPNESS));
-    teamProtection.putAll(buildIntegerUpgrades(UpgradePath.TEAM_PROTECTION));
+    teamSharpness.putAll(buildEnchantUpgrades(UpgradePath.TEAM_SHARPNESS, Enchantment.DAMAGE_ALL, InventorySlot.HAND));
+    teamProtection.putAll(buildEnchantUpgrades(UpgradePath.TEAM_PROTECTION,
+      Enchantment.PROTECTION_ENVIRONMENTAL,
+      InventorySlot.HEAD, InventorySlot.CHEST, InventorySlot.LEGS, InventorySlot.FEET));
 
     UpgradeConfigFile.instance.initiate();
   }
@@ -79,42 +83,52 @@ public class UpgradeConfigFile extends TransformedObject {
     Objects.requireNonNull(section, "Section " + path + " is null");
 
     for (String key : section.getKeys(false)) {
-      Matcher matcher = levelPattern.matcher(key);
+      Matcher matcher = Constants.LEVEL_PATTERN.matcher(key);
       if (!matcher.matches()) continue;
       int level = Integer.parseInt(matcher.group("level"));
 
       String equipmentFormat = String.format("%s.equipment", key);
       String requiredPointsFormat = String.format("%s.required-points", key);
+      String iconFormat = String.format("%s.icon", key);
 
       int points = section.getInt(requiredPointsFormat, 0);
       ConfigurationSection configurationSection = section.getConfigurationSection(equipmentFormat);
       EquipmentComponent equipmentComponent = new EquipmentComponent(configurationSection);
+      String iconName = section.getString(iconFormat, "stone");
+      XMaterial icon = XMaterial.matchXMaterial(iconName).orElse(XMaterial.STONE);
 
-      UpgradeConfig upgradeConfig = new UpgradeConfig(points, equipmentComponent);
+      UpgradeConfig upgradeConfig = new UpgradeConfig(points, icon, equipmentComponent);
       map.put(level, upgradeConfig);
     }
 
     return map;
   }
 
-  private static Map<Integer, UpgradeConfig> buildIntegerUpgrades(String path) {
+  private static Map<Integer, UpgradeConfig> buildEnchantUpgrades(String path,
+                                                                  Enchantment enchantment,
+                                                                  InventorySlot... inventorySlots) {
     Objects.requireNonNull(configuration, "initiate first");
     Map<Integer, UpgradeConfig> map = new HashMap<>();
     ConfigurationSection section = configuration.getConfigurationSection(path);
     Objects.requireNonNull(section, "Section " + path + " is null");
 
     for (String key : section.getKeys(false)) {
-      Matcher matcher = levelPattern.matcher(key);
+      Matcher matcher = Constants.LEVEL_PATTERN.matcher(key);
       if (!matcher.matches()) continue;
 
-      String requiredPointsFormat = String.format("%s.points", key);
+      String requiredPointsFormat = String.format("%s.required-points", key);
       String enchantLevelFormat = String.format("%s.enchant-level", key);
+      String iconFormat = String.format("%s.icon", key);
+
       int level = Integer.parseInt(matcher.group("level"));
 
       int enchantmentLevel = section.getInt(enchantLevelFormat, 1);
       int points = section.getInt(requiredPointsFormat, 1);
+      ItemEnchantUpgrade itemEnchantUpgrade = new ItemEnchantUpgrade(enchantment, enchantmentLevel, inventorySlots);
+      String iconName = section.getString(iconFormat, "stone");
+      XMaterial icon = XMaterial.matchXMaterial(iconName).orElse(XMaterial.STONE);
 
-      UpgradeConfig upgradeConfig = new UpgradeConfig(points, enchantmentLevel);
+      UpgradeConfig upgradeConfig = new UpgradeConfig(points, icon, itemEnchantUpgrade);
       map.put(level, upgradeConfig);
     }
 

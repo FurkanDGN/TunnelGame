@@ -29,18 +29,25 @@ public class MapManager {
     return this.worldName;
   }
 
-  public void reloadMap() {
+  public void deleteWorld() {
     try {
       this.worldManager.deleteWorld(this.worldName);
-      FileUtils.forceDelete(this.worldPath);
-      if (this.recoverPath.isDirectory()) {
-        FileUtils.copyDirectory(this.recoverPath, this.worldPath);
-      } else {
-        FileUtils.copyFile(this.recoverPath, this.worldPath);
-      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  public void cloneAndLoadWorld() {
+    try {
+      FileUtils.copyFile(this.recoverPath, this.worldPath);
       this.worldManager.loadWorld(this.worldName);
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  public void reloadMap() throws Exception {
+    this.worldManager.deleteWorld(this.worldName);
+    this.cloneAndLoadWorld();
   }
 }

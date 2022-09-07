@@ -1,6 +1,7 @@
 package me.dantero.tunnelgame.common.game.configuration.component;
 
 import me.dantero.tunnelgame.common.InventorySlot;
+import me.dantero.tunnelgame.common.upgrade.Applicable;
 import me.dantero.tunnelgame.common.util.EnchantUtil;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -9,14 +10,13 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EntityEquipment;
-import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class EquipmentComponent {
+public final class EquipmentComponent implements Applicable {
 
   private final Map<InventorySlot, ItemStack> equipment = new HashMap<>();
 
@@ -39,6 +39,8 @@ public final class EquipmentComponent {
 
         item.addEnchantment(enchantment, level);
       }
+      int amount = itemSection.getInt("amount", 1);
+      item.setAmount(amount);
 
       this.equipment.put(InventorySlot.fromString(itemSection.getString("slot")), item);
     }
@@ -59,5 +61,10 @@ public final class EquipmentComponent {
         equipment.setItem(equipmentSlot.asEquipmentSlot(), itemStack);
       }
     });
+  }
+
+  @Override
+  public void apply(Player player) {
+    this.apply((Entity) player);
   }
 }

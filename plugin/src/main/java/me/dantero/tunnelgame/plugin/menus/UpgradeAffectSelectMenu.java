@@ -11,6 +11,7 @@ import com.gmail.furkanaxx34.dlibrary.transformer.annotations.Names;
 import com.gmail.furkanaxx34.dlibrary.xseries.XMaterial;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import me.dantero.tunnelgame.common.game.SessionContext;
 import me.dantero.tunnelgame.common.upgrade.AffectType;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -38,8 +39,7 @@ public class UpgradeAffectSelectMenu extends BaseMenu {
       .setLore("&eClick to make self upgrade")
       .getItemStack(),
     1,
-    3,
-    clickEvent -> SelfUpgradeMenu.open(clickEvent.contents().player())
+    3
   );
 
   @NotNull
@@ -49,8 +49,7 @@ public class UpgradeAffectSelectMenu extends BaseMenu {
       .setLore("&eClick to make team upgrade")
       .getItemStack(),
     1,
-    5,
-    clickEvent -> TeamUpgradeMenu.open(clickEvent.contents().player())
+    5
   );
 
   @Nullable
@@ -64,12 +63,16 @@ public class UpgradeAffectSelectMenu extends BaseMenu {
     UpgradeAffectSelectMenu.menu.load(plugin);
   }
 
-  public static void open(Player player) {
+  public static void open(Player player, SessionContext sessionContext) {
     Objects.requireNonNull(menu, "initiate first!");
     menu.openPage(player, row, "upgrade-affect-select-gui", title, initEvent -> {
       InventoryContents contents = initEvent.contents();
-      selfUpgrade.place(contents);
-      teamUpgrade.place(contents);
+      selfUpgrade
+        .addEvent(clickEvent -> SelfUpgradeMenu.open(player, sessionContext))
+        .place(contents);
+      teamUpgrade
+        .addEvent(clickEvent -> TeamUpgradeMenu.open(player, sessionContext))
+        .place(contents);
     });
   }
 }

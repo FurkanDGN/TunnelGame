@@ -1,0 +1,11 @@
+file-version: 1
+start-countdown: 20
+max-players: 10
+lowest-block-height: 78
+game-direction: WEST
+spawn-point:
+  x: 1682.5
+  y: 79
+  z: 0.5
+  yaw: 90
+  pitch: 0

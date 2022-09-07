@@ -13,50 +13,54 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 public final class ModifiedEntity {
 
   private final EntityAttribute entityAttribute;
   private final EntityModifier entityModifier;
-  private final Location eggLocation;
   private final String worldName;
 
   private int id;
 
-  public ModifiedEntity(final ModifiedEntitySetting setting, final Location location) {
+  public ModifiedEntity(@NotNull final ModifiedEntitySetting setting, @NotNull final String worldName) {
+    Objects.requireNonNull(setting, "Modified entity setting cannot be null");
+    Objects.requireNonNull(worldName, "World name cannot be null");
+    if (worldName.isBlank()) throw new NullPointerException("World name cannot be blank");
+
     this.entityAttribute = new EntityAttribute(
       setting.getTriggerAttribute(),
       setting.getAmmoAttribute(),
       setting.getEntityAttributes()
     );
-
     this.entityModifier = new EntityModifier(
       setting.getEntityType(),
       setting.getEntityDisplayName(),
       setting.isSelfDamageResistance(),
       setting.getEquipmentComponent()
     );
-    this.eggLocation = location.clone().add(0, 2, 0);
-    this.worldName = location.getWorld().getName();
+    this.worldName = worldName;
   }
 
-  public Entity initiate(@Nullable final Location location) {
-    Location spawnLocation = location == null ? this.eggLocation : location;
-    final Entity spawnedEntity = spawnLocation.getWorld().spawnEntity(spawnLocation, this.entityModifier.entityType, CreatureSpawnEvent.SpawnReason.CUSTOM);
+  public Entity initiate(@NotNull final Location location) {
+    if (!location.getWorld().getName().equals(this.worldName)) {
+      throw new IllegalArgumentException("The spawn point cannot be in different world from the worldName given in the constructor.");
+    }
 
+    final Entity spawnedEntity = location.getWorld().spawnEntity(location, this.entityModifier.entityType, CreatureSpawnEvent.SpawnReason.CUSTOM);
     spawnedEntity.customName(LegacyComponentSerializer.legacyAmpersand().deserialize(this.entityModifier.displayName));
     this.entityAttribute.apply(spawnedEntity);
     this.entityModifier.equipmentComponent.apply(spawnedEntity);
-
     this.id = spawnedEntity.getEntityId();
+
     return spawnedEntity;
   }
 
-  public int id() {
+  public int getId() {
     return this.id;
   }
 
@@ -141,8 +145,8 @@ public final class ModifiedEntity {
       });
     }
 
-    public TriggerAttribute triggerAttribute() {
-      return this.triggerAttribute;
+    public Optional<TriggerAttribute> triggerAttribute() {
+      return Optional.ofNullable(this.triggerAttribute);
     }
 
     public AmmoAttribute ammoAttribute() {

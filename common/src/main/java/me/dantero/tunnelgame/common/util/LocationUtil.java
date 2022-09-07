@@ -4,6 +4,7 @@ import me.dantero.tunnelgame.common.Constants;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.BlockFace;
 import org.jetbrains.annotations.NotNull;
 
 public final class LocationUtil {
@@ -37,8 +38,40 @@ public final class LocationUtil {
     return location.getWorld().getHighestBlockAt(location).getY();
   }
 
-  public static boolean isNewLocation(Location now, Location last) {
-    return now.getBlock().getLocation().equals(last.getBlock().getLocation());
+  public static boolean isSameLocation(Location now, Location last, boolean ignoreY) {
+    Location nowLocation = now.getBlock().getLocation();
+    Location lastLocation = last.getBlock().getLocation();
+
+    if (ignoreY) {
+      nowLocation.setY(0);
+      lastLocation.setY(0);
+    }
+
+    return nowLocation.equals(lastLocation);
+  }
+
+  public static boolean isDifferentWorld(Location now, Location last) {
+    return !now.getWorld().getName().equals(last.getWorld().getName());
+  }
+
+  public static BlockFace add90Degree(BlockFace blockFace) {
+    return switch (blockFace) {
+      case NORTH -> BlockFace.EAST;
+      case EAST -> BlockFace.SOUTH;
+      case SOUTH -> BlockFace.WEST;
+      case WEST -> BlockFace.NORTH;
+      default -> throw new IllegalArgumentException("Unsupported block face");
+    };
+  }
+
+  public static BlockFace sub90Degree(BlockFace blockFace) {
+    return switch (blockFace) {
+      case NORTH -> BlockFace.WEST;
+      case EAST -> BlockFace.NORTH;
+      case SOUTH -> BlockFace.EAST;
+      case WEST -> BlockFace.SOUTH;
+      default -> throw new IllegalArgumentException("Unsupported block face");
+    };
   }
 
 }

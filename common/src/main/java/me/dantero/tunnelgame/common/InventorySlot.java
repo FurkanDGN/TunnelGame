@@ -10,12 +10,12 @@ import java.util.Locale;
  */
 public record InventorySlot(int slot) {
 
-  private static final int HAND_SLOT = 36;
-  private static final int OFF_HAND_SLOT = 45;
-  private static final int HEAD_SLOT = 5;
-  private static final int CHEST_SLOT = 6;
-  private static final int LEGS_SLOT = 7;
-  private static final int FEET_SLOT = 8;
+  private static final int HAND_SLOT = 0;
+  private static final int OFF_HAND_SLOT = 40;
+  private static final int HEAD_SLOT = 39;
+  private static final int CHEST_SLOT = 38;
+  private static final int LEGS_SLOT = 37;
+  private static final int FEET_SLOT = 36;
 
   public static final InventorySlot HAND = new InventorySlot(HAND_SLOT);
   public static final InventorySlot OFF_HAND = new InventorySlot(OFF_HAND_SLOT);

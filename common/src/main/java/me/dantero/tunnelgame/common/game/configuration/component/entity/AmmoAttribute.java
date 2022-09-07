@@ -16,7 +16,7 @@ public final class AmmoAttribute {
 
   private final Map<PotionEffect, Integer> effects = new HashMap<>();
 
-  public AmmoAttribute(final @NotNull FileConfiguration configuration) {
+  public AmmoAttribute(final @NotNull ConfigurationSection configuration) {
     final ConfigurationSection ammoAttributes = configuration.getConfigurationSection("ammo-attribute");
     if (ammoAttributes != null) {
       for (final String key : ammoAttributes.getKeys(false)) {

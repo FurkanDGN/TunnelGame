@@ -1,4 +1,5 @@
 name: TunnelGame
 version: '${version}'
 main: me.dantero.tunnelgame.plugin.TunnelGame
-api-version: 1.19
+api-version: 1.18
+depend: [SlimeWorldManager]

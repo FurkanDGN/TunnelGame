@@ -3,6 +3,8 @@ package me.dantero.tunnelgame.common;
 import me.dantero.tunnelgame.common.util.time.TimeAPI;
 import org.bukkit.NamespacedKey;
 
+import java.util.regex.Pattern;
+
 /**
  * @author Furkan Doğan
  */
@@ -11,7 +13,7 @@ public interface Constants {
 
   String UPGRADES_KEY_FORMAT = "%s-%s";
 
-  String SPAWN_POINT_KEY = "spawnpoint";
+  String SPAWN_POINT_KEY = "spawn-point";
 
   String ADMIN_PERMISSION = "tunnelgame.admin";
 
@@ -19,9 +21,9 @@ public interface Constants {
 
   int DEFAULT_COOLDOWN = 5000;
 
-  int KILL_REWARD_POINTS = 20;
-
   TimeAPI TIME_API = new TimeAPI();
+
+  Pattern LEVEL_PATTERN = Pattern.compile("^level-(?<level>\\d+)(-(?<range>\\d+))?");
 
   NamespacedKey OWNER_KEY = new NamespacedKey("tunnelgame", "owner");
 }

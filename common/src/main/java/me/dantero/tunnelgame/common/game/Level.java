@@ -10,6 +10,10 @@ public interface Level {
 
   void prepare(Location startLocation, BlockFace direction);
 
+  boolean isOutBackside(Location location);
+
+  boolean isPassed(Location location);
+
   void startLevel();
 
   void clearLevel();
