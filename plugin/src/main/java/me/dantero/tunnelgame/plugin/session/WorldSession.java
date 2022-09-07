@@ -4,6 +4,7 @@ import com.gmail.furkanaxx34.dlibrary.bukkit.color.XColor;
 import com.gmail.furkanaxx34.dlibrary.bukkit.location.RandomUtil;
 import com.gmail.furkanaxx34.dlibrary.bukkit.utils.TaskUtilities;
 import com.grinderwolf.swm.api.exceptions.UnknownWorldException;
+import me.dantero.tunnelgame.common.Constants;
 import me.dantero.tunnelgame.common.config.ConfigFile;
 import me.dantero.tunnelgame.common.config.LanguageFile;
 import me.dantero.tunnelgame.common.game.Level;
@@ -29,6 +30,8 @@ import org.bukkit.World;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.*;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
@@ -161,6 +164,15 @@ public class WorldSession implements Session {
       this.sendActionBar(message);
       this.sendTitle("&a", message);
     });
+  }
+
+  @Override
+  public void handleEntitySpawn(LivingEntity entity) {
+    PersistentDataContainer persistentDataContainer = entity.getPersistentDataContainer();
+    Integer root = persistentDataContainer.get(Constants.ROOT_KEY, PersistentDataType.INTEGER);
+    if (root != null && this.entities.contains(root)) {
+      this.entities.add(entity.getEntityId());
+    }
   }
 
   @Override

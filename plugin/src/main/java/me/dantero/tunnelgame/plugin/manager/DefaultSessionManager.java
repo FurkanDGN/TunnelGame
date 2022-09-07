@@ -46,6 +46,11 @@ public class DefaultSessionManager implements SessionManager {
   }
 
   @Override
+  public Optional<Session> getSession(String worldName) {
+    return SESSIONS.stream().filter(session -> session.getSessionContext().getWorldName().equals(worldName)).findFirst();
+  }
+
+  @Override
   public Optional<Session> getSession(Player player) {
     return SESSIONS.stream().filter(session -> session.getSessionContext().isInGame(player)).findFirst();
   }

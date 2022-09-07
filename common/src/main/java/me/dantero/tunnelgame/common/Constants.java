@@ -26,4 +26,6 @@ public interface Constants {
   Pattern LEVEL_PATTERN = Pattern.compile("^level-(?<level>\\d+)(-(?<range>\\d+))?");
 
   NamespacedKey OWNER_KEY = new NamespacedKey("tunnelgame", "owner");
+
+  NamespacedKey ROOT_KEY = new NamespacedKey("tunnelgame", "root");
 }

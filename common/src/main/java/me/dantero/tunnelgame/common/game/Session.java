@@ -30,6 +30,8 @@ public interface Session {
 
   void handleLevelPass(Location location);
 
+  void handleEntitySpawn(LivingEntity entity);
+
   void handleEntityDeath(LivingEntity livingEntity);
 
   void handlePlayerDeath(Player player);

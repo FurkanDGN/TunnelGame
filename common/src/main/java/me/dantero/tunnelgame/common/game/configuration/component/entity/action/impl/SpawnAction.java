@@ -50,6 +50,7 @@ public class SpawnAction extends AbstractAction {
 
   private void handle(ModifiedEntity modifiedEntity, Player player) {
     final LivingEntity livingEntity = (LivingEntity) modifiedEntity.entity();
+    int entityId = livingEntity.getEntityId();
 
     final Location entityLocation = livingEntity.getLocation();
     final Location playerLocation = player.getLocation();
@@ -58,9 +59,9 @@ public class SpawnAction extends AbstractAction {
     String ownerName = owner != null ? owner.getName() : null;
 
     if (this.target.equalsIgnoreCase("SELF")) {
-      this.spawnEntities(entityLocation, ownerName);
+      this.spawnEntities(entityLocation, ownerName, entityId);
     } else {
-      this.spawnEntities(playerLocation, ownerName);
+      this.spawnEntities(playerLocation, ownerName, entityId);
     }
   }
 
@@ -69,15 +70,17 @@ public class SpawnAction extends AbstractAction {
     return 20000L;
   }
 
-  private void spawnEntities(Location location, String owner) {
+  private void spawnEntities(Location location, String owner, int root) {
     this.entityMap.forEach((entityType, count) -> {
       for (int i = 0; i < count; i++) {
         if (entityType.equals(EntityType.LIGHTNING)) {
           location.getWorld().strikeLightning(location);
         } else {
           Entity entity = location.getWorld().spawnEntity(location, entityType, SpawnReason.CUSTOM);
+          PersistentDataContainer persistentDataContainer = entity.getPersistentDataContainer();
+          persistentDataContainer.set(Constants.ROOT_KEY, PersistentDataType.INTEGER, root);
+
           if (owner != null) {
-            PersistentDataContainer persistentDataContainer = entity.getPersistentDataContainer();
             persistentDataContainer.set(Constants.OWNER_KEY, PersistentDataType.STRING, owner);
           }
         }

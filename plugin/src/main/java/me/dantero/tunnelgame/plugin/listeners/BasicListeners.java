@@ -53,6 +53,13 @@ public class BasicListeners extends Listener {
       event -> event.setCancelled(true)
     );
 
+    this.listenEvent(CreatureSpawnEvent.class,
+      event -> event.getSpawnReason().equals(CreatureSpawnEvent.SpawnReason.CUSTOM) &&
+        this.sessionManager.isSessionWorld(Objects.requireNonNull(event.getLocation().getWorld(), "World is null").getName()),
+      event -> this.sessionManager.getSession(Objects.requireNonNull(event.getLocation().getWorld(), "World is null").getName())
+        .ifPresent(session -> session.handleEntitySpawn(event.getEntity()))
+    );
+
     this.listenEvent(PlayerJoinEvent.class, event -> true, event -> this.joinHandler.handle(event.getPlayer()));
   }
 

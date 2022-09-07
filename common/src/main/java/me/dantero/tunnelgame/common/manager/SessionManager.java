@@ -27,6 +27,8 @@ public interface SessionManager {
 
   Optional<Session> getSession(Entity livingEntity);
 
+  Optional<Session> getSession(String worldName);
+
   Optional<Session> findAvailable();
 
   void clearEndedSessions();
