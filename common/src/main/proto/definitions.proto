@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+option java_package = "me.dantero.tunnelgame.common.proto";
+option java_outer_classname = "Definition";
+option java_multiple_files = true;
+
+option optimize_for = LITE_RUNTIME;
+
+package me.dantero.tunnelgame.common.proto;
+
+message Server {
+    string name = 1;
+}
+
+message ServerMessage {
+    string id = 1;
+    string type = 2;
+    string source = 3;
+    string target = 4;
+    bytes data = 5;
+}
+
+message RedisMessage {
+    bytes topic = 1;
+    bytes message = 2;
+}
+
+message NetworkUser {
+    User user = 1;
+    Server server = 2;
+}
+
+message User {
+    string id = 1;
+    string name = 2;
+}
+
+message Earth {
+    string id = 1;
+    string name = 2;
+}
+
+message Position {
+    Earth earth = 1;
+    double x = 2;
+    double y = 3;
+    double z = 4;
+    float yaw = 5;
+    float pitch = 6;
+}
+
+message ServerInfo {
+    Server server = 1;
+    repeated Session sessions = 2;
+    double tps = 3;
+}
+
+message UserMessage {
+    NetworkUser source = 1;
+    NetworkUser target = 2;
+    ServerMessage message = 3;
+}
+
+message NetworkPosition {
+    Server server = 1;
+    Position position = 2;
+}
+
+message Session {
+    int32 id = 1;
+    GameState game_state = 2;
+    sint32 player_count = 3;
+}
+
+enum GameState {
+    GAME_STATE_IN_GAME = 0;
+    GAME_STATE_WAITING = 1;
+    GAME_STATE_STARTING = 2;
+    GAME_STATE_ENDED = 3;
+}

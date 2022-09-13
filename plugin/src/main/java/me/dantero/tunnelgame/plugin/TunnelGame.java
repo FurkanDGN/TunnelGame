@@ -36,7 +36,37 @@ public final class TunnelGame extends JavaPlugin {
 
   @Override
   public void onEnable() {
+    this.initialize();
+  }
+
+  @Override
+  public void onDisable() {
+    Optional.ofNullable(this.sessionManager)
+      .ifPresent(manager -> manager.sessions().forEach(Session::stop));
+  }
+
+  private void registerEvents(SessionManager sessionManager,
+                              PointManager pointManager,
+                              JoinHandler joinHandler) {
+    new BasicListeners(this, sessionManager, pointManager, joinHandler)
+      .register();
+    new PlayerMoveListener(this, sessionManager)
+      .register();
+    new ModifiedEntityListeners(this, sessionManager)
+      .register();
+  }
+
+  private void initialize() {
     DLibrary.initialize(this);
+    this.loadFiles();
+    this.sessionManager = new DefaultSessionManager();
+    PointManager pointManager = new DefaultPointManager();
+    JoinHandler joinHandler = new DefaultJoinHandler(this.sessionManager);
+    this.initializeSessions();
+    this.registerEvents(this.sessionManager, pointManager, joinHandler);
+  }
+
+  private void loadFiles() {
     FileUtil.saveResources(this,
       "worlds/default.slime",
       "config.yml",
@@ -50,36 +80,20 @@ public final class TunnelGame extends JavaPlugin {
     SelfUpgradeMenu.loadConfig(this);
     TeamUpgradeMenu.loadConfig(this);
     CompleteUpgradeMenu.loadConfig(this);
+  }
 
-    SessionManager sessionManager = new DefaultSessionManager();
-    PointManager pointManager = new DefaultPointManager();
-    JoinHandler joinHandler = new DefaultJoinHandler(sessionManager);
-
+  private void initializeSessions() {
     SlimePlugin slimePlugin = (SlimePlugin) Bukkit.getPluginManager().getPlugin("SlimeWorldManager");
     WorldManager worldManager = new SlimeWorldManager(slimePlugin);
-
     File file = new File(this.getDataFolder() + File.separator + "worlds", "default.slime");
-    Session session = new WorldSession(file, worldManager, LevelConfigFile.levelConfiguration);
-    sessionManager.setupSession(session);
-    session.prepare();
 
-    this.registerEvents(sessionManager, pointManager, joinHandler);
+    for (int i = 0; i < ConfigFile.maxSessionCount; i++) {
+      this.initNewSession(worldManager, file);
+    }
   }
 
-  @Override
-  public void onDisable() {
-    Optional.ofNullable(this.sessionManager)
-      .ifPresent(sessionManager1 -> sessionManager1.sessions().forEach(Session::stop));
-  }
-
-  private void registerEvents(SessionManager sessionManager,
-                              PointManager pointManager,
-                              JoinHandler joinHandler) {
-    new BasicListeners(this, sessionManager, pointManager, joinHandler)
-      .register();
-    new PlayerMoveListener(this, sessionManager)
-      .register();
-    new ModifiedEntityListeners(this, sessionManager)
-      .register();
+  private void initNewSession(WorldManager worldManager, File file) {
+    Session session = new WorldSession(file, worldManager, LevelConfigFile.levelConfiguration, this);
+    this.sessionManager.setupSession(session);
   }
 }

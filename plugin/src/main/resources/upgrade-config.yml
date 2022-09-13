@@ -1,17 +1,5 @@
 self-armor-upgrades:
-  level-1:
-    icon: "LEATHER_HELMET"
-    required-points: 5
-    equipment:
-      LEATHER_HELMET:
-        slot: "HEAD"
-      LEATHER_CHESTPLATE:
-        slot: "CHEST"
-      LEATHER_LEGGINGS:
-        slot: "LEGS"
-      LEATHER_BOOTS:
-        slot: "FEET"
-  level-2:
+  level-1-30:
     icon: "CHAINMAIL_HELMET"
     required-points: 10
     equipment:
@@ -23,7 +11,7 @@ self-armor-upgrades:
         slot: "LEGS"
       CHAINMAIL_BOOTS:
         slot: "FEET"
-  level-3:
+  level-31-60:
     icon: "IRON_HELMET"
     required-points: 20
     equipment:
@@ -35,7 +23,7 @@ self-armor-upgrades:
         slot: "LEGS"
       IRON_BOOTS:
         slot: "FEET"
-  level-4:
+  level-61-100:
     icon: "DIAMOND_HELMET"
     required-points: 30
     equipment:
@@ -47,6 +35,8 @@ self-armor-upgrades:
         slot: "LEGS"
       DIAMOND_BOOTS:
         slot: "FEET"
+  level-4:
+
 
 self-food-upgrades:
   level-1:

@@ -9,3 +9,5 @@ spawn-point:
   z: 0.5
   yaw: 90
   pitch: 0
+upgrade-countdown: 15
+kill-reward-points: 2

@@ -31,7 +31,7 @@ public class DefaultPointManager implements PointManager {
     return current >= points;
   }
 
-  private int getPoints(UUID uuid) {
+  public int getPoints(UUID uuid) {
     return POINT_MAP.getOrDefault(uuid, 0);
   }
 }

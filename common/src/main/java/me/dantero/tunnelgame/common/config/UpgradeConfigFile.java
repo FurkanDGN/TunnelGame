@@ -86,6 +86,7 @@ public class UpgradeConfigFile extends TransformedObject {
       Matcher matcher = Constants.LEVEL_PATTERN.matcher(key);
       if (!matcher.matches()) continue;
       int level = Integer.parseInt(matcher.group("level"));
+      String range = matcher.group("range");
 
       String equipmentFormat = String.format("%s.equipment", key);
       String requiredPointsFormat = String.format("%s.required-points", key);
@@ -99,6 +100,12 @@ public class UpgradeConfigFile extends TransformedObject {
 
       UpgradeConfig upgradeConfig = new UpgradeConfig(points, icon, equipmentComponent);
       map.put(level, upgradeConfig);
+
+      if (range != null) {
+        for (int i = level + 1; i <= Integer.parseInt(range); i++) {
+          map.put(i, upgradeConfig);
+        }
+      }
     }
 
     return map;

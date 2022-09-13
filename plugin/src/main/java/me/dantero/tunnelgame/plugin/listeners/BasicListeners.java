@@ -1,5 +1,6 @@
 package me.dantero.tunnelgame.plugin.listeners;
 
+import com.gmail.furkanaxx34.dlibrary.bukkit.utils.TaskUtilities;
 import me.dantero.tunnelgame.common.Constants;
 import me.dantero.tunnelgame.common.config.ConfigFile;
 import me.dantero.tunnelgame.common.config.LanguageFile;
@@ -17,8 +18,6 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.Plugin;
 
-import java.util.AbstractMap;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.Map;
 import java.util.Objects;
 
@@ -56,8 +55,8 @@ public class BasicListeners extends Listener {
     this.listenEvent(CreatureSpawnEvent.class,
       event -> event.getSpawnReason().equals(CreatureSpawnEvent.SpawnReason.CUSTOM) &&
         this.sessionManager.isSessionWorld(Objects.requireNonNull(event.getLocation().getWorld(), "World is null").getName()),
-      event -> this.sessionManager.getSession(Objects.requireNonNull(event.getLocation().getWorld(), "World is null").getName())
-        .ifPresent(session -> session.handleEntitySpawn(event.getEntity()))
+      event -> TaskUtilities.syncLater(1, bukkitRunnable -> this.sessionManager.getSession(Objects.requireNonNull(event.getLocation().getWorld(), "World is null").getName())
+        .ifPresent(session -> session.handleEntitySpawn(event.getEntity())))
     );
 
     this.listenEvent(PlayerJoinEvent.class, event -> true, event -> this.joinHandler.handle(event.getPlayer()));
@@ -83,7 +82,7 @@ public class BasicListeners extends Listener {
         Player killer = entity.getKiller();
         if (killer == null) return;
         this.pointManager.addPoints(killer, ConfigFile.killRewardPoints);
-        String message = LanguageFile.earnedPoints.build(new SimpleEntry<>("%points%", () -> String.valueOf(ConfigFile.killRewardPoints)));
+        String message = LanguageFile.earnedPoints.build(Map.entry("%points%", () -> String.valueOf(ConfigFile.killRewardPoints)));
         killer.sendMessage(message);
         session.handleEntityDeath(entity);
       });

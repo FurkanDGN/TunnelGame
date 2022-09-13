@@ -1,6 +1,9 @@
 package me.dantero.tunnelgame.common.config;
 
+import com.gmail.furkanaxx34.dlibrary.bukkit.color.XColor;
 import com.gmail.furkanaxx34.dlibrary.bukkit.transformer.resolvers.BukkitSnakeyaml;
+import com.gmail.furkanaxx34.dlibrary.replaceable.RpList;
+import com.gmail.furkanaxx34.dlibrary.replaceable.RpString;
 import com.gmail.furkanaxx34.dlibrary.transformer.TransformedObject;
 import com.gmail.furkanaxx34.dlibrary.transformer.TransformerPool;
 import com.gmail.furkanaxx34.dlibrary.transformer.annotations.Exclude;
@@ -26,7 +29,13 @@ import java.util.Optional;
 @Names(modifier = Names.Modifier.TO_LOWER_CASE, strategy = Names.Strategy.HYPHEN_CASE)
 public class ConfigFile extends TransformedObject {
 
+  public static boolean lobbyMode = false;
+
+  public static String serverId = "1";
+
   public static int maxPlayers = 10;
+
+  public static int maxSessionCount = 10;
 
   public static int startCountdown = 20;
 
@@ -34,9 +43,23 @@ public class ConfigFile extends TransformedObject {
 
   public static int lowestBlockHeight = 70;
 
-  public static int killRewardPoints = 20;
+  public static int killRewardPoints = 4;
 
   public static BlockFace gameDirection = BlockFace.WEST;
+
+  public static RpString scoreboardTitle = RpString.from("&6&lTunnel Game")
+    .map(XColor::colorize);
+
+  public static RpList scoreboardLines = RpList.from(
+    "&ePlayer: %player%",
+    "&a",
+    "&ePoints: %points%",
+    "&a",
+    "&eCurrent Level: %level%"
+    )
+    .map(XColor::colorize);
+
+  public static RedisConfig redisConfig = new RedisConfig();
 
   @Exclude
   private static TransformedObject instance;
@@ -63,5 +86,14 @@ public class ConfigFile extends TransformedObject {
       float pitch = Float.parseFloat(map.get("pitch").toString());
       return new Location(null, x, y, z, yaw, pitch);
     }).orElse(null);
+  }
+
+  public static final class RedisConfig extends TransformedObject {
+
+    public static String redisHost = "localhost";
+
+    public static String redisUsername = "admin";
+
+    public static String redisPassword = "";
   }
 }

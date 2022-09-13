@@ -12,17 +12,20 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * @author Furkan Doğan
  */
 public class DefaultSessionManager implements SessionManager {
 
-  private static final Set<Session> SESSIONS = new HashSet<>();
+  private static final Set<Session> SESSIONS = new CopyOnWriteArraySet<>();
 
   @Override
   public void setupSession(Session session) {
     SESSIONS.add(session);
+    session.prepare();
   }
 
   @Override

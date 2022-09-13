@@ -26,4 +26,10 @@ public interface PointManager {
   default boolean hasPoints(Player player, int points) {
     return this.hasPoints(player.getUniqueId(), points);
   }
+
+  int getPoints(UUID uuid);
+
+  default int getPoints(Player player) {
+    return this.getPoints(player.getUniqueId());
+  }
 }

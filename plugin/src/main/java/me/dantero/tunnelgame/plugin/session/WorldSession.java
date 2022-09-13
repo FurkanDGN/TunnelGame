@@ -15,10 +15,12 @@ import me.dantero.tunnelgame.common.game.configuration.ModifiedEntity;
 import me.dantero.tunnelgame.common.game.configuration.ModifiedEntitySetting;
 import me.dantero.tunnelgame.common.game.state.GameState;
 import me.dantero.tunnelgame.common.game.state.JoinResultState;
+import me.dantero.tunnelgame.common.manager.ScoreboardManager;
 import me.dantero.tunnelgame.common.manager.WorldManager;
 import me.dantero.tunnelgame.common.util.FilenameUtil;
 import me.dantero.tunnelgame.common.util.LocationUtil;
 import me.dantero.tunnelgame.plugin.level.TunnelLevel;
+import me.dantero.tunnelgame.plugin.manager.DefaultScoreboardManager;
 import me.dantero.tunnelgame.plugin.menus.UpgradeAffectSelectMenu;
 import me.dantero.tunnelgame.plugin.session.manager.MapManager;
 import me.dantero.tunnelgame.plugin.session.manager.PlayerInventoryStoreManager;
@@ -32,6 +34,7 @@ import org.bukkit.entity.*;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,16 +57,19 @@ public class WorldSession implements Session {
   private final Map<Integer, Level> levels;
   private final Set<Integer> entities;
   private final List<ModifiedEntity> currentEntities;
+  private final ScoreboardManager scoreboardManager;
 
   @Nullable
   private World world;
 
   public WorldSession(File worldRecoverPath,
                       WorldManager worldManager,
-                      LevelConfiguration levelConfiguration) {
+                      LevelConfiguration levelConfiguration,
+                      Plugin plugin) {
     Objects.requireNonNull(worldRecoverPath, "World recover path cannot be null");
     Objects.requireNonNull(worldManager, "World manager cannot be null");
     Objects.requireNonNull(levelConfiguration, "Level configuration cannot be null");
+    Objects.requireNonNull(plugin, "Plugin cannot be null");
 
     File worldPath = this.buildWorldPath(worldRecoverPath);
     this.sessionId = SESSION_ID_COUNTER.get();
@@ -78,6 +84,9 @@ public class WorldSession implements Session {
     this.sessionContext = new DefaultSessionContext(worldName, playerInventoryStoreManager);
     this.entities = new HashSet<>();
     this.currentEntities = new ArrayList<>();
+
+    this.scoreboardManager = new DefaultScoreboardManager(plugin);
+    this.scoreboardManager.setup(this);
   }
 
   @Override
@@ -126,6 +135,7 @@ public class WorldSession implements Session {
   public void stop() {
     SESSION_ID_COUNTER.decrementAndGet();
     this.peekPlayers(player -> player.kickPlayer("Game ended. Thanks for playing."));
+    this.scoreboardManager.stop();
     this.sessionContext.clear();
     this.levels.clear();
     this.mapManager.deleteWorld();
@@ -140,7 +150,6 @@ public class WorldSession implements Session {
       .filter(livingEntity -> this.entities.contains(livingEntity.getEntityId()))
       .peek(livingEntity -> this.entities.remove(livingEntity.getEntityId()))
       .peek(livingEntity -> this.currentEntities.removeIf(modifiedEntity -> modifiedEntity.getId() == livingEntity.getEntityId()))
-      .peek(livingEntity -> livingEntity.setHealth(0))
       .forEach(Entity::remove);
 
     int maxLevel = this.levels.size();
@@ -149,15 +158,15 @@ public class WorldSession implements Session {
 
     if (level > maxLevel) {
       this.peekPlayers(player -> player.kickPlayer("Game ended. Thanks for playing."));
-      TaskUtilities.syncLater(20*2, bukkitRunnable -> this.stop());
+      TaskUtilities.syncLater(20 * 2, bukkitRunnable -> this.stop());
       return;
     }
 
     this.teleportPlayers(this.currentLevelSpawnPoint());
-    this.sessionContext.togglePause();
+    this.togglePause();
     this.peekPlayers(player -> UpgradeAffectSelectMenu.open(player, this.sessionContext));
     this.startCountdown(ConfigFile.upgradeCountdown, LanguageFile.waiting4Upgrades.build(), unused -> {
-      this.sessionContext.togglePause();
+      this.togglePause();
       this.peekPlayers(HumanEntity::closeInventory);
       this.levelConfiguration.levelEntities().get(level).forEach(this::spawnEntity);
       String message = LanguageFile.gameStarted.build();
@@ -266,7 +275,7 @@ public class WorldSession implements Session {
       level.prepare(spawnPoint, gameDirection);
       int length = level.goalLength();
       Vector vector = gameDirection.getDirection();
-      vector.multiply(length+1);
+      vector.multiply(length + 1);
       spawnPoint.add(vector);
     }
   }
@@ -323,13 +332,19 @@ public class WorldSession implements Session {
     });
   }
 
+  private Location currentLevelSpawnPoint() {
+    int currentLevel = this.sessionContext.getCurrentLevel().get();
+    int totalLength = this.calculateLevelLength(currentLevel) + currentLevel - 1;
+    Location spawnPoint = ConfigFile.getSpawnPoint();
+    spawnPoint.setWorld(Objects.requireNonNull(this.world, "World is null"));
+    int length = this.levelConfiguration.levelLength().get(currentLevel);
+    Vector vector = ConfigFile.gameDirection.getDirection().multiply(totalLength - length);
+    return spawnPoint.add(vector);
+  }
+
   private void teleportPlayers(Location location) {
-    BlockFace gameDirection = ConfigFile.gameDirection;
-    Vector randomVector = gameDirection.getDirection().multiply(RandomUtil.RANDOM.nextDouble(4));
-    randomVector.add(LocationUtil.add90Degree(gameDirection).getDirection().multiply(RandomUtil.RANDOM.nextDouble(3)));
-    randomVector.add(LocationUtil.sub90Degree(gameDirection).getDirection().multiply(RandomUtil.RANDOM.nextDouble(3)));
-    Location newLocation = location.clone().add(randomVector);
-    this.peekPlayers(player -> player.teleport(newLocation));
+    final Location rotatedLocation = LocationUtil.randomRotatedLocation(location);
+    this.peekPlayers(player -> player.teleport(rotatedLocation));
   }
 
   private void sendTitle(String title, String subtitle) {
@@ -345,15 +360,5 @@ public class WorldSession implements Session {
       .stream()
       .filter(Objects::nonNull)
       .forEach(playerConsumer);
-  }
-
-  private Location currentLevelSpawnPoint() {
-    int currentLevel = this.sessionContext.getCurrentLevel().get();
-    int totalLength = this.calculateLevelLength(currentLevel);
-    Location spawnPoint = ConfigFile.getSpawnPoint();
-    spawnPoint.setWorld(Objects.requireNonNull(this.world, "World is null"));
-    int length = this.levelConfiguration.levelLength().get(currentLevel);
-    Vector vector = ConfigFile.gameDirection.getDirection().multiply(totalLength - length);
-    return spawnPoint.add(vector);
   }
 }

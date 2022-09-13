@@ -1,10 +1,12 @@
 package me.dantero.tunnelgame.common.util;
 
 import me.dantero.tunnelgame.common.Constants;
+import me.dantero.tunnelgame.common.config.ConfigFile;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.BlockFace;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
 public final class LocationUtil {
@@ -19,6 +21,14 @@ public final class LocationUtil {
     }
 
     return result;
+  }
+
+  public static Location randomRotatedLocation(final @NotNull Location baseLocation) {
+    BlockFace gameDirection = ConfigFile.gameDirection;
+    Vector randomVector = gameDirection.getDirection().multiply(com.gmail.furkanaxx34.dlibrary.bukkit.location.RandomUtil.RANDOM.nextDouble(4));
+    randomVector.add(LocationUtil.add90Degree(gameDirection).getDirection().multiply(com.gmail.furkanaxx34.dlibrary.bukkit.location.RandomUtil.RANDOM.nextDouble(3)));
+    randomVector.add(LocationUtil.sub90Degree(gameDirection).getDirection().multiply(com.gmail.furkanaxx34.dlibrary.bukkit.location.RandomUtil.RANDOM.nextDouble(3)));
+    return baseLocation.clone().add(randomVector);
   }
 
   public static boolean validWorld(final World origin, final World target) {
