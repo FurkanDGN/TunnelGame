@@ -202,6 +202,11 @@ public class WorldSession implements Session {
   }
 
   @Override
+  public void handlePlayerQuit(Player player) {
+
+  }
+
+  @Override
   public JoinResultState tryJoinPlayer(Player player) {
     return this.sessionContext.tryJoinPlayer(player);
   }

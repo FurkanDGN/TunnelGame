@@ -38,6 +38,8 @@ public interface Session {
 
   void handlePlayerRespawn(PlayerRespawnEvent event);
 
+  void handlePlayerQuit(Player player);
+
   Level currentLevel();
 
   JoinResultState tryJoinPlayer(Player player);

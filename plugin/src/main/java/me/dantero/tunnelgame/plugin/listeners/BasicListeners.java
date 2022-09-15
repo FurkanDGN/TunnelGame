@@ -15,6 +15,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.Plugin;
 
@@ -59,7 +60,7 @@ public class BasicListeners extends Listener {
         .ifPresent(session -> session.handleEntitySpawn(event.getEntity())))
     );
 
-    this.listenEvent(PlayerJoinEvent.class, event -> true, event -> this.joinHandler.handle(event.getPlayer()));
+    this.listenEvent(PlayerJoinEvent.class, event -> this.joinHandler.handle(event.getPlayer()));
   }
 
   private void registerInGameEvents() {
@@ -92,5 +93,7 @@ public class BasicListeners extends Listener {
     this.listenInGameEvent(PlayerDeathEvent.class, (event, session) -> session.handlePlayerDeath(event.getEntity()));
 
     this.listenInGameEvent(PlayerRespawnEvent.class, (event, session) -> session.handlePlayerRespawn(event));
+
+    this.listenInGameEvent(PlayerQuitEvent.class, (event, session) -> session.handlePlayerQuit(event.getPlayer()));
   }
 }

@@ -1,4 +1,4 @@
 rootProject.name = 'tunnelgame'
-include 'common'
-include 'plugin'
+include ':common'
+include ':plugin'
 

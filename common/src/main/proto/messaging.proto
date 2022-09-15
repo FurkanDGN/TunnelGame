@@ -8,13 +8,7 @@ option optimize_for = LITE_RUNTIME;
 
 package me.dantero.tunnelgame.common.proto;
 
-import "google/protobuf/empty.proto";
 import "definitions.proto";
-
-service RedisService {
-
-    rpc publish(RedisMessage) returns (google.protobuf.Empty);
-}
 
 message TeleportRequest {
     User user = 1;

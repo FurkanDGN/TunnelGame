@@ -17,3 +17,7 @@ processResources {
         expand props
     }
 }
+
+shadowJar {
+    exclude 'META-INF/**'
+}

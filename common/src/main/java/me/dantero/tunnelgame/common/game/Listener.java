@@ -15,6 +15,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.projectiles.ProjectileSource;
 
@@ -43,6 +44,10 @@ public abstract class Listener {
 
   protected  <T extends Event> void listenEvent(Class<T> tClass, Predicate<T> predicate, Consumer<T> consumer) {
     new ListenerBasic<>(tClass, predicate, consumer).register(this.plugin);
+  }
+
+  protected  <T extends Event> void listenEvent(Class<T> tClass, Consumer<T> consumer) {
+    new ListenerBasic<>(tClass, t -> true, consumer).register(this.plugin);
   }
 
   protected  <T extends Event> void listenInGameEvent(Class<T> tClass, BiConsumer<T, Session> consumer) {

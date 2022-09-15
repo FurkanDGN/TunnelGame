@@ -20,11 +20,6 @@ message ServerMessage {
     bytes data = 5;
 }
 
-message RedisMessage {
-    bytes topic = 1;
-    bytes message = 2;
-}
-
 message NetworkUser {
     User user = 1;
     Server server = 2;

@@ -14,6 +14,7 @@ import me.dantero.tunnelgame.common.manager.WorldManager;
 import me.dantero.tunnelgame.common.util.FileUtil;
 import me.dantero.tunnelgame.plugin.handler.DefaultJoinHandler;
 import me.dantero.tunnelgame.plugin.listeners.BasicListeners;
+import me.dantero.tunnelgame.plugin.listeners.LobbyListeners;
 import me.dantero.tunnelgame.plugin.listeners.ModifiedEntityListeners;
 import me.dantero.tunnelgame.plugin.listeners.PlayerMoveListener;
 import me.dantero.tunnelgame.plugin.manager.DefaultPointManager;
@@ -30,6 +31,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.util.Optional;
 
+@SuppressWarnings("unused")
 public final class TunnelGame extends JavaPlugin {
 
   private SessionManager sessionManager;
@@ -45,24 +47,13 @@ public final class TunnelGame extends JavaPlugin {
       .ifPresent(manager -> manager.sessions().forEach(Session::stop));
   }
 
-  private void registerEvents(SessionManager sessionManager,
-                              PointManager pointManager,
-                              JoinHandler joinHandler) {
-    new BasicListeners(this, sessionManager, pointManager, joinHandler)
-      .register();
-    new PlayerMoveListener(this, sessionManager)
-      .register();
-    new ModifiedEntityListeners(this, sessionManager)
-      .register();
-  }
-
   private void initialize() {
     DLibrary.initialize(this);
     this.loadFiles();
     this.sessionManager = new DefaultSessionManager();
     PointManager pointManager = new DefaultPointManager();
     JoinHandler joinHandler = new DefaultJoinHandler(this.sessionManager);
-    this.initializeSessions();
+    if (!ConfigFile.lobbyMode) this.initializeSessions();
     this.registerEvents(this.sessionManager, pointManager, joinHandler);
   }
 
@@ -95,5 +86,20 @@ public final class TunnelGame extends JavaPlugin {
   private void initNewSession(WorldManager worldManager, File file) {
     Session session = new WorldSession(file, worldManager, LevelConfigFile.levelConfiguration, this);
     this.sessionManager.setupSession(session);
+  }
+
+  private void registerEvents(SessionManager sessionManager,
+                              PointManager pointManager,
+                              JoinHandler joinHandler) {
+    if (ConfigFile.lobbyMode) {
+      Bukkit.getPluginManager().registerEvents(new LobbyListeners(), this);
+    } else {
+      new BasicListeners(this, sessionManager, pointManager, joinHandler)
+        .register();
+      new PlayerMoveListener(this, sessionManager)
+        .register();
+      new ModifiedEntityListeners(this, sessionManager)
+        .register();
+    }
   }
 }
