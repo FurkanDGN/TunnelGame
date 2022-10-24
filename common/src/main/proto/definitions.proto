@@ -65,6 +65,7 @@ message Session {
     int32 id = 1;
     GameState game_state = 2;
     sint32 player_count = 3;
+    sint32 max_player_count = 4;
 }
 
 enum GameState {
@@ -72,4 +73,6 @@ enum GameState {
     GAME_STATE_WAITING = 1;
     GAME_STATE_STARTING = 2;
     GAME_STATE_ENDED = 3;
+    GAME_STATE_ROLLBACK = 4;
+    GAME_STATE_BROKEN = 5;
 }

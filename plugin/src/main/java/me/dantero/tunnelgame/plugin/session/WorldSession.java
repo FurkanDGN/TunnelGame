@@ -15,11 +15,13 @@ import me.dantero.tunnelgame.common.game.configuration.ModifiedEntity;
 import me.dantero.tunnelgame.common.game.configuration.ModifiedEntitySetting;
 import me.dantero.tunnelgame.common.game.state.GameState;
 import me.dantero.tunnelgame.common.game.state.JoinResultState;
+import me.dantero.tunnelgame.common.manager.InventoryManager;
 import me.dantero.tunnelgame.common.manager.ScoreboardManager;
 import me.dantero.tunnelgame.common.manager.WorldManager;
 import me.dantero.tunnelgame.common.util.FilenameUtil;
 import me.dantero.tunnelgame.common.util.LocationUtil;
 import me.dantero.tunnelgame.plugin.level.TunnelLevel;
+import me.dantero.tunnelgame.plugin.manager.DefaultInventoryManager;
 import me.dantero.tunnelgame.plugin.manager.DefaultScoreboardManager;
 import me.dantero.tunnelgame.plugin.menus.UpgradeAffectSelectMenu;
 import me.dantero.tunnelgame.plugin.session.manager.MapManager;
@@ -58,6 +60,7 @@ public class WorldSession implements Session {
   private final Set<Integer> entities;
   private final List<ModifiedEntity> currentEntities;
   private final ScoreboardManager scoreboardManager;
+  private final InventoryManager inventoryManager;
 
   @Nullable
   private World world;
@@ -75,9 +78,7 @@ public class WorldSession implements Session {
     this.sessionId = SESSION_ID_COUNTER.get();
     this.mapManager = new MapManager(worldPath, worldRecoverPath, worldManager);
     this.levelConfiguration = levelConfiguration;
-    this.levels = new HashMap<>();
-    levelConfiguration.levelLength()
-      .forEach((level, length) -> this.levels.put(level, new TunnelLevel(length, ConfigFile.lowestBlockHeight)));
+    this.levels = this.buildLevels(levelConfiguration);
 
     String worldName = this.mapManager.getWorldName();
     PlayerInventoryStoreManager playerInventoryStoreManager = new PlayerInventoryStoreManager();
@@ -87,6 +88,8 @@ public class WorldSession implements Session {
 
     this.scoreboardManager = new DefaultScoreboardManager(plugin);
     this.scoreboardManager.setup(this);
+
+    this.inventoryManager = new DefaultInventoryManager(() -> this.sessionContext.getPlayers().stream());
   }
 
   @Override
@@ -102,20 +105,20 @@ public class WorldSession implements Session {
       this.mapManager.cloneAndLoadWorld();
     } catch (Exception e) {
       e.printStackTrace();
+      this.sessionContext.setGameState(GameState.BROKEN);
+      return;
     }
     String worldName = this.mapManager.getWorldName();
     this.world = Objects.requireNonNull(Bukkit.getWorld(worldName), "World is null");
     this.prepareLevels();
+    this.sessionContext.setGameState(GameState.WAITING);
   }
 
   @Override
   public void start() {
     this.sessionContext.setGameState(GameState.STARTING);
-
-    Location spawnPoint = ConfigFile.getSpawnPoint();
-    spawnPoint.setWorld(Bukkit.getWorld(this.sessionContext.getWorldName()));
-    this.teleportPlayers(spawnPoint);
-
+    this.teleportPlayersSpawn();
+    this.inventoryManager.giveStarterKit();
     this.startCountdown(ConfigFile.startCountdown, LanguageFile.gameStarting.build(),
       unused -> {
         this.sessionContext.setGameState(GameState.IN_GAME);
@@ -133,12 +136,36 @@ public class WorldSession implements Session {
 
   @Override
   public void stop() {
-    SESSION_ID_COUNTER.decrementAndGet();
     this.peekPlayers(player -> player.kickPlayer("Game ended. Thanks for playing."));
-    this.scoreboardManager.stop();
     this.sessionContext.clear();
-    this.levels.clear();
+    if (this.sessionContext.isPaused()) {
+      this.sessionContext.togglePause();
+    }
     this.mapManager.deleteWorld();
+  }
+
+  @Override
+  public void shutdown() {
+    this.stop();
+    SESSION_ID_COUNTER.decrementAndGet();
+    this.scoreboardManager.stop();
+  }
+
+  @Override
+  public void restart() {
+    this.sessionContext.setGameState(GameState.ROLLBACK);
+    this.stop();
+    String worldName = this.sessionContext.getWorldName();
+    if (Bukkit.getWorld(worldName) != null) {
+      Bukkit.unloadWorld(worldName, false);
+      this.mapManager.deleteWorld();
+    }
+    try {
+      this.prepare();
+    } catch (Exception e) {
+      this.sessionContext.setGameState(GameState.BROKEN);
+      throw new RuntimeException("An error occurred. Status set to broken.", e);
+    }
   }
 
   @Override
@@ -149,16 +176,14 @@ public class WorldSession implements Session {
       .filter(livingEntity -> livingEntity instanceof Monster)
       .filter(livingEntity -> this.entities.contains(livingEntity.getEntityId()))
       .peek(livingEntity -> this.entities.remove(livingEntity.getEntityId()))
-      .peek(livingEntity -> this.currentEntities.removeIf(modifiedEntity -> modifiedEntity.getId() == livingEntity.getEntityId()))
       .forEach(Entity::remove);
 
     int maxLevel = this.levels.size();
-
     int level = this.sessionContext.getCurrentLevel().incrementAndGet();
 
     if (level > maxLevel) {
       this.peekPlayers(player -> player.kickPlayer("Game ended. Thanks for playing."));
-      TaskUtilities.syncLater(20 * 2, bukkitRunnable -> this.stop());
+      TaskUtilities.syncLater(20 * 2, bukkitRunnable -> this.restart());
       return;
     }
 
@@ -169,10 +194,15 @@ public class WorldSession implements Session {
       this.togglePause();
       this.peekPlayers(HumanEntity::closeInventory);
       this.levelConfiguration.levelEntities().get(level).forEach(this::spawnEntity);
-      String message = LanguageFile.gameStarted.build();
+      String message = LanguageFile.levelUp.build(Map.entry("%level%", () -> String.valueOf(level)));
       this.sendActionBar(message);
       this.sendTitle("&a", message);
     });
+  }
+
+  @Override
+  public boolean levelGoalsCompleted() {
+    return this.currentEntities.size() == 0;
   }
 
   @Override
@@ -203,12 +233,27 @@ public class WorldSession implements Session {
 
   @Override
   public void handlePlayerQuit(Player player) {
-
+    this.sessionContext.handleQuitPlayer(player);
+    if (this.sessionContext.getPlayers().size() == 0 && this.getSessionContext().getGameState() == GameState.IN_GAME) {
+      TaskUtilities.syncLater(1, bukkitRunnable -> this.restart());
+    }
   }
 
   @Override
   public JoinResultState tryJoinPlayer(Player player) {
-    return this.sessionContext.tryJoinPlayer(player);
+    JoinResultState joinResultState = this.sessionContext.tryJoinPlayer(player);
+
+    if (joinResultState == JoinResultState.SUCCESSFUL) {
+      if (this.sessionContext.getPlayers().size() >= 1 && this.sessionContext.getGameState() == GameState.WAITING) {
+        this.start();
+      } else {
+        Location spawnPoint = ConfigFile.getSpawnPoint();
+        spawnPoint.setWorld(Bukkit.getWorld(this.sessionContext.getWorldName()));
+        player.teleport(spawnPoint);
+      }
+    }
+
+    return joinResultState;
   }
 
   @Override
@@ -320,14 +365,19 @@ public class WorldSession implements Session {
   private void startCountdown(int time, String messagePrefix, Consumer<Void> onEnd) {
     AtomicInteger countdown = new AtomicInteger(time);
     TaskUtilities.syncTimer(20, bukkitRunnable -> {
-      if (this.sessionContext.getGameState() == GameState.ENDED) {
+      if (this.sessionContext.getGameState() == GameState.ENDED || this.sessionContext.getPlayers().size() == 0) {
+        this.sessionContext.setGameState(GameState.WAITING);
         bukkitRunnable.cancel();
         return;
       }
 
       int countdownInt = countdown.getAndDecrement();
       if (countdownInt <= 0) {
-        onEnd.accept(null);
+        try {
+          onEnd.accept(null);
+        } catch (Exception ex) {
+          ex.printStackTrace();
+        }
         bukkitRunnable.cancel();
       } else {
         String message = XColor.colorize(String.format("&a%s: %s", messagePrefix, countdownInt));
@@ -348,8 +398,7 @@ public class WorldSession implements Session {
   }
 
   private void teleportPlayers(Location location) {
-    final Location rotatedLocation = LocationUtil.randomRotatedLocation(location);
-    this.peekPlayers(player -> player.teleport(rotatedLocation));
+    this.peekPlayers(player -> player.teleport(LocationUtil.randomRotatedLocation(location)));
   }
 
   private void sendTitle(String title, String subtitle) {
@@ -365,5 +414,19 @@ public class WorldSession implements Session {
       .stream()
       .filter(Objects::nonNull)
       .forEach(playerConsumer);
+  }
+
+  private void teleportPlayersSpawn() {
+    Location spawnPoint = ConfigFile.getSpawnPoint();
+    spawnPoint.setWorld(Bukkit.getWorld(this.sessionContext.getWorldName()));
+    this.teleportPlayers(spawnPoint);
+  }
+
+  private Map<Integer, Level> buildLevels(LevelConfiguration levelConfiguration) {
+    return levelConfiguration.levelLength()
+      .entrySet()
+      .stream()
+      .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey(), new TunnelLevel(entry.getValue(), ConfigFile.lowestBlockHeight)))
+      .collect(HashMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), Map::putAll);
   }
 }

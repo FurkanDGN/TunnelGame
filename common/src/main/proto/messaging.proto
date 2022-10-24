@@ -10,9 +10,10 @@ package me.dantero.tunnelgame.common.proto;
 
 import "definitions.proto";
 
-message TeleportRequest {
+message JoinRequest {
     User user = 1;
-    NetworkPosition position = 2;
+    Server server = 2;
+    int32 session_id = 3;
 }
 
 message Heartbeat {

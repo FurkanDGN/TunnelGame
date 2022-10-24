@@ -1,11 +1,11 @@
 plugins {
-    id 'com.google.protobuf' version '0.8.19'
+    id 'com.google.protobuf'
 }
 
 dependencies {
+    implementation 'com.google.protobuf:protobuf-java:3.17.3'
     implementation('com.gmail.furkanaxx34:DBukkit:1.0.0')
     implementation 'io.lettuce:lettuce-core:6.2.0.RELEASE'
-    implementation 'com.google.protobuf:protobuf-java:3.21.5'
     implementation 'com.github.ben-manes.caffeine:guava:3.1.1'
     compileOnly "com.sk89q.worldedit:worldedit-bukkit:7.2.0-SNAPSHOT"
     compileOnly "io.papermc.paper:paper-api:1.18.2-R0.1-SNAPSHOT"
@@ -23,13 +23,6 @@ tasks {
 
 shadowJar {
     exclude 'plugin.yml'
-    exclude 'reactor/**'
-    exclude 'google/**'
-    exclude 'com/google/common/**'
-    exclude 'META-INF/**'
-    minimize() {
-        exclude(dependency('com.gmail.furkanaxx34:DBukkit:1.0.0'))
-    }
 }
 
 sourceSets {
@@ -40,5 +33,11 @@ sourceSets {
         resources {
             srcDir("src/main/proto")
         }
+    }
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.17.3"
     }
 }

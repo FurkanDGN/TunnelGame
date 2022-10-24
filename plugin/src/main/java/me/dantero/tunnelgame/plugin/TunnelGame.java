@@ -2,15 +2,20 @@ package me.dantero.tunnelgame.plugin;
 
 import com.gmail.furkanaxx34.dlibrary.bukkit.DLibrary;
 import com.grinderwolf.swm.api.SlimePlugin;
-import me.dantero.tunnelgame.common.config.ConfigFile;
-import me.dantero.tunnelgame.common.config.LanguageFile;
-import me.dantero.tunnelgame.common.config.LevelConfigFile;
-import me.dantero.tunnelgame.common.config.UpgradeConfigFile;
+import me.dantero.tunnelgame.common.config.*;
 import me.dantero.tunnelgame.common.game.Session;
 import me.dantero.tunnelgame.common.handlers.JoinHandler;
 import me.dantero.tunnelgame.common.manager.PointManager;
 import me.dantero.tunnelgame.common.manager.SessionManager;
+import me.dantero.tunnelgame.common.manager.SignManager;
 import me.dantero.tunnelgame.common.manager.WorldManager;
+import me.dantero.tunnelgame.common.misc.ServerInfos;
+import me.dantero.tunnelgame.common.misc.Servers;
+import me.dantero.tunnelgame.common.misc.Topics;
+import me.dantero.tunnelgame.common.proto.JoinRequest;
+import me.dantero.tunnelgame.common.redis.PubSub;
+import me.dantero.tunnelgame.common.redis.Redis;
+import me.dantero.tunnelgame.common.util.BungeeUtil;
 import me.dantero.tunnelgame.common.util.FileUtil;
 import me.dantero.tunnelgame.plugin.handler.DefaultJoinHandler;
 import me.dantero.tunnelgame.plugin.listeners.BasicListeners;
@@ -19,6 +24,7 @@ import me.dantero.tunnelgame.plugin.listeners.ModifiedEntityListeners;
 import me.dantero.tunnelgame.plugin.listeners.PlayerMoveListener;
 import me.dantero.tunnelgame.plugin.manager.DefaultPointManager;
 import me.dantero.tunnelgame.plugin.manager.DefaultSessionManager;
+import me.dantero.tunnelgame.plugin.manager.GameSignManager;
 import me.dantero.tunnelgame.plugin.manager.SlimeWorldManager;
 import me.dantero.tunnelgame.plugin.menus.CompleteUpgradeMenu;
 import me.dantero.tunnelgame.plugin.menus.SelfUpgradeMenu;
@@ -35,6 +41,7 @@ import java.util.Optional;
 public final class TunnelGame extends JavaPlugin {
 
   private SessionManager sessionManager;
+  private PubSub pubSub;
 
   @Override
   public void onEnable() {
@@ -44,17 +51,20 @@ public final class TunnelGame extends JavaPlugin {
   @Override
   public void onDisable() {
     Optional.ofNullable(this.sessionManager)
-      .ifPresent(manager -> manager.sessions().forEach(Session::stop));
+      .ifPresent(manager -> manager.sessions().forEach(Session::shutdown));
+    Redis.get().close();
   }
 
   private void initialize() {
     DLibrary.initialize(this);
     this.loadFiles();
     this.sessionManager = new DefaultSessionManager();
+    this.initiateSystems(this.sessionManager);
     PointManager pointManager = new DefaultPointManager();
     JoinHandler joinHandler = new DefaultJoinHandler(this.sessionManager);
     if (!ConfigFile.lobbyMode) this.initializeSessions();
-    this.registerEvents(this.sessionManager, pointManager, joinHandler);
+    SignManager signManager = new GameSignManager();
+    this.registerEvents(this.sessionManager, pointManager, joinHandler, signManager);
   }
 
   private void loadFiles() {
@@ -71,6 +81,20 @@ public final class TunnelGame extends JavaPlugin {
     SelfUpgradeMenu.loadConfig(this);
     TeamUpgradeMenu.loadConfig(this);
     CompleteUpgradeMenu.loadConfig(this);
+    SignsFile.loadFile(this);
+  }
+
+  private void initiateSystems(SessionManager sessionManager) {
+    Servers.init();
+    Redis.init();
+    if (ConfigFile.lobbyMode) {
+      ServerInfos.initLobby();
+    } else {
+      Runnable runnable = ServerInfos.init(() -> -1, sessionManager::sessions);
+      Bukkit.getScheduler().runTaskTimer(this, runnable, 1, 20);
+    }
+    this.pubSub = new PubSub(Topics.JOIN_PLAYER);
+    BungeeUtil.init(this, this.pubSub);
   }
 
   private void initializeSessions() {
@@ -90,9 +114,11 @@ public final class TunnelGame extends JavaPlugin {
 
   private void registerEvents(SessionManager sessionManager,
                               PointManager pointManager,
-                              JoinHandler joinHandler) {
+                              JoinHandler joinHandler,
+                              SignManager signManager) {
     if (ConfigFile.lobbyMode) {
-      Bukkit.getPluginManager().registerEvents(new LobbyListeners(), this);
+      signManager.init();
+      Bukkit.getPluginManager().registerEvents(new LobbyListeners(signManager), this);
     } else {
       new BasicListeners(this, sessionManager, pointManager, joinHandler)
         .register();
@@ -100,6 +126,8 @@ public final class TunnelGame extends JavaPlugin {
         .register();
       new ModifiedEntityListeners(this, sessionManager)
         .register();
+
+      this.pubSub.subscribe(JoinRequest.getDefaultInstance(), joinHandler::handleRequest);
     }
   }
 }

@@ -5,8 +5,10 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 import lombok.experimental.FieldDefaults;
-import me.dantero.tunnelgame.common.game.state.GameState;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Furkan Doğan
@@ -24,5 +26,18 @@ public final class SpigotServer {
   String name;
 
   @NotNull
-  GameState gameState;
+  Set<Integer> sessions;
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || this.getClass() != o.getClass()) return false;
+    SpigotServer that = (SpigotServer) o;
+    return this.name.equals(that.name) && this.sessions.equals(that.sessions);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(this.name, this.sessions);
+  }
 }

@@ -28,7 +28,13 @@ public interface Session {
 
   void stop();
 
+  void shutdown();
+
+  void restart();
+
   void handleLevelPass(Location location);
+
+  boolean levelGoalsCompleted();
 
   void handleEntitySpawn(LivingEntity entity);
 

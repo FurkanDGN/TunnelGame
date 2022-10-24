@@ -3,10 +3,7 @@ package me.dantero.tunnelgame.common.misc;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import me.dantero.tunnelgame.common.config.ConfigFile;
-import me.dantero.tunnelgame.common.proto.Heartbeat;
-import me.dantero.tunnelgame.common.proto.Server;
-import me.dantero.tunnelgame.common.proto.ServerInfo;
-import me.dantero.tunnelgame.common.proto.Session;
+import me.dantero.tunnelgame.common.proto.*;
 import me.dantero.tunnelgame.common.redis.PubSub;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +11,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * @author Furkan Doğan
@@ -25,7 +23,7 @@ public interface ServerInfos {
     .build();
 
   /**
-   * finds applicable server for the group.
+   * finds applicable server.
    *
    * @param current the current to find.
    *
@@ -49,7 +47,7 @@ public interface ServerInfos {
       .filter(Objects::nonNull)
       .filter(serverInfo -> serverInfo.getSessionsList()
         .stream()
-        .anyMatch(session -> session.getPlayerCount() < ConfigFile.maxPlayers)
+        .anyMatch(session -> session.getPlayerCount() < session.getMaxPlayerCount())
       ).toList();
     if (applicableServers.isEmpty()) {
       return Optional.empty();
@@ -60,13 +58,23 @@ public interface ServerInfos {
   }
 
   /**
-   * finds applicable server for the group.
+   * finds applicable server.
    *
    * @return found server.
    */
   @NotNull
   static Optional<ServerInfo> applicableServerFor() {
     return ServerInfos.applicableServerFor(false);
+  }
+
+  static Optional<Session> getSession(String server, int sessionId) {
+    return CACHE.asMap().values()
+      .stream()
+      .filter(serverInfo -> serverInfo.getServer().getName().equals(server))
+      .map(ServerInfo::getSessionsList)
+      .flatMap(Collection::stream)
+      .filter(session -> session.getId() == sessionId)
+      .findFirst();
   }
 
   /**
@@ -80,7 +88,7 @@ public interface ServerInfos {
   @NotNull
   static ServerInfo createInfo(
     final int tps,
-    final List<Session> sessions
+    final Set<Session> sessions
     ) {
     return ServerInfo.newBuilder()
       .setServer(Server.newBuilder()
@@ -89,6 +97,15 @@ public interface ServerInfos {
       .addAllSessions(sessions)
       .setTps(tps)
       .build();
+  }
+
+  /**
+   * initiates the server to listen server info messages.
+   *
+   */
+  static void initLobby() {
+    PubSub pubSub = new PubSub(Topics.HEARTBEAT);
+    pubSub.subscribe(Heartbeat.getDefaultInstance(), ServerInfos::onHeartbeat);
   }
 
   /**
@@ -104,7 +121,6 @@ public interface ServerInfos {
     @NotNull final PubSub pubSub,
     @NotNull final Supplier<ServerInfo> infoSupplier
   ) {
-    pubSub.subscribe(Heartbeat.getDefaultInstance(), ServerInfos::onHeartbeat);
     return () -> pubSub.send("*", Heartbeat.newBuilder()
       .setInfo(infoSupplier.get())
       .build());
@@ -135,9 +151,26 @@ public interface ServerInfos {
   @NotNull
   static Runnable init(
     @NotNull final IntSupplier tpsSupplier,
-    @NotNull final Supplier<List<Session>> sessionSupplier
+    @NotNull final Supplier<Set<me.dantero.tunnelgame.common.game.Session>> sessionSupplier
   ) {
-    return ServerInfos.init(() -> ServerInfos.createInfo(tpsSupplier.getAsInt(), sessionSupplier.get()));
+    return ServerInfos.init(() -> ServerInfos.createInfo(tpsSupplier.getAsInt(), buildSessions(sessionSupplier.get())));
+  }
+
+  /**
+   * converts game session objects to protobuf
+   * @param sessionSupplier session supplier to convert.
+   * @return protobuf session set.
+   */
+  private static Set<Session> buildSessions(Set<me.dantero.tunnelgame.common.game.Session> sessionSupplier) {
+    return sessionSupplier
+      .stream()
+      .map(session -> Session.newBuilder()
+        .setId(session.sessionId())
+        .setGameState(Protobuf.toGameState(session.getSessionContext().getGameState()))
+        .setPlayerCount(session.getSessionContext().getPlayers().size())
+        .setMaxPlayerCount(ConfigFile.maxPlayers)
+        .build())
+      .collect(Collectors.toSet());
   }
 
   /**
@@ -149,6 +182,14 @@ public interface ServerInfos {
     @NotNull final Heartbeat heartbeat
   ) {
     final var info = heartbeat.getInfo();
-    ServerInfos.CACHE.put(info.getServer().getName(), info);
+    String name = info.getServer().getName();
+    ServerInfos.CACHE.put(name, info);
+
+    Set<Integer> sessions = info.getSessionsList()
+      .stream()
+      .map(Session::getId)
+      .collect(Collectors.toSet());
+    SpigotServer server = new SpigotServer(name, sessions);
+    Servers.register(server);
   }
 }

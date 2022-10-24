@@ -1,7 +1,12 @@
+# Don't touch this.
 file-version: 1
+# Time to start the game.
 start-countdown: 20
+# Maximum number of players that can enter a game.
 max-players: 10
+# The height of the ground on the map.
 lowest-block-height: 78
+# Which direction the tunnel is going.
 game-direction: WEST
 spawn-point:
   x: 1682.5
@@ -9,5 +14,37 @@ spawn-point:
   z: 0.5
   yaw: 90
   pitch: 0
+# Time to make upgrades.
 upgrade-countdown: 15
-kill-reward-points: 2
+# Points per monster kill.
+kill-reward-points: 20
+# Bungeecord server name suffix
+#
+# Name of server in Bungeecord should be like 'server mode-id' for example:
+# If lobby: lobby-1
+# If not: server-1
+server-id: '1'
+# Scoreboard title.
+scoreboard-title: '&6&lTunnel Game'
+# Scoreboard lines.
+scoreboard-lines:
+  - '&ePlayer: %player%'
+  - '&a'
+  - '&ePoints: %points%'
+  - '&a'
+  - '&eCurrent Level: %level%'
+# Redis configuration.
+redis-config:
+  redis-host: localhost
+  redis-username: admin
+  redis-password: ''
+# Maximum number of game.
+max-session-count: 10
+# If this server is lobby, set as true.
+lobby-mode: true
+# Lobby sign format.
+lobby-sign:
+  - '&aTunnel Game'
+  - '&e%cur-pl%&8/&e%max-pl%'
+  - '%state%'
+  - '&7%server-suffix%-%session-id%'

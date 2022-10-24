@@ -1,6 +1,7 @@
 package me.dantero.tunnelgame.plugin.manager;
 
 import me.dantero.tunnelgame.common.manager.PointManager;
+import org.bukkit.entity.Player;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,5 +34,11 @@ public class DefaultPointManager implements PointManager {
 
   public int getPoints(UUID uuid) {
     return POINT_MAP.getOrDefault(uuid, 0);
+  }
+
+  @Override
+  public void clearPoints(Player player) {
+    UUID uniqueId = player.getUniqueId();
+    POINT_MAP.remove(uniqueId);
   }
 }

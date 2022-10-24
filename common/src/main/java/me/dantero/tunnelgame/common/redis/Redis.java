@@ -44,7 +44,7 @@ public class Redis {
    * initiates the redis.
    */
   public void init() {
-    Redis.init(ConfigFile.RedisConfig.redisHost, ConfigFile.RedisConfig.redisUsername, ConfigFile.RedisConfig.redisPassword);
+    Redis.init(ConfigFile.RedisConfig.host, ConfigFile.RedisConfig.port, ConfigFile.RedisConfig.username, ConfigFile.RedisConfig.password);
   }
 
   /**
@@ -54,14 +54,8 @@ public class Redis {
    * @param username the username to init.
    * @param password the password to init.
    */
-  public void init(@NotNull final String host, @Nullable final String username, @NotNull final String password) {
-    final var builder = RedisURI.Builder.sentinel(host);
-    if (username == null) {
-      builder.withPassword(password.toCharArray());
-    } else {
-      builder.withAuthentication(username, password);
-    }
-    Redis.uri = builder.build();
+  public void init(@NotNull final String host, int port, @Nullable final String username, @NotNull final String password) {
+    Redis.uri = buildRedisUri(host, port, username, password);
     Redis.client = RedisClient.create(Redis.uri);
   }
 
@@ -72,7 +66,8 @@ public class Redis {
    */
   @NotNull
   public ConnectionFuture<StatefulRedisPubSubConnection<byte[], byte[]>> pubSubAsync() {
-    return Redis.get().connectPubSubAsync(ByteArrayCodec.INSTANCE, Redis.uri);
+    RedisURI redisURI = buildRedisUri(ConfigFile.RedisConfig.host, ConfigFile.RedisConfig.port, ConfigFile.RedisConfig.username, ConfigFile.RedisConfig.password);
+    return Redis.get().connectPubSubAsync(ByteArrayCodec.INSTANCE, redisURI);
   }
 
   /**
@@ -83,5 +78,16 @@ public class Redis {
   @NotNull
   public StatefulRedisPubSubConnection<byte[], byte[]> pubSubSync() {
     return Redis.get().connectPubSub(ByteArrayCodec.INSTANCE);
+  }
+
+  @NotNull
+  private RedisURI buildRedisUri(@NotNull final String host, int port, @Nullable final String username, @NotNull final String password) {
+    final var builder = RedisURI.Builder.redis(host, port);
+    if (username == null || !username.isBlank()) {
+      builder.withPassword(password.toCharArray());
+    } else {
+      builder.withAuthentication(username, password);
+    }
+    return builder.build();
   }
 }

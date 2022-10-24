@@ -37,7 +37,11 @@ public class PlayerMoveListener extends Listener {
       if (level.isOutBackside(to)) {
         event.setCancelled(true);
       } else if (level.isPassed(to)) {
-        session.handleLevelPass(to);
+        if (session.levelGoalsCompleted()) {
+          session.handleLevelPass(to);
+        } else {
+          event.setCancelled(true);
+        }
       }
     });
   }

@@ -1,10 +1,8 @@
 package me.dantero.tunnelgame.common.misc;
 
 import com.google.protobuf.GeneratedMessageV3;
-import me.dantero.tunnelgame.common.proto.GameState;
-import me.dantero.tunnelgame.common.proto.NetworkPosition;
-import me.dantero.tunnelgame.common.proto.Server;
-import me.dantero.tunnelgame.common.proto.ServerMessage;
+import me.dantero.tunnelgame.common.proto.*;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
@@ -49,6 +47,39 @@ public interface Protobuf {
     @NotNull final GeneratedMessageV3 message
   ) {
     return Protobuf.createServerMessage(UUID.randomUUID().toString(), target, message);
+  }
+
+  /**
+   * creates a game state from game state.
+   * @param gameState real game state object.
+   * @return protobuf game state object.
+   */
+  @NotNull
+  static GameState toGameState(me.dantero.tunnelgame.common.game.state.GameState gameState) {
+    return switch (gameState) {
+      case WAITING -> GameState.GAME_STATE_WAITING;
+      case STARTING -> GameState.GAME_STATE_STARTING;
+      case IN_GAME -> GameState.GAME_STATE_IN_GAME;
+      case ENDED -> GameState.GAME_STATE_ENDED;
+      case ROLLBACK -> GameState.GAME_STATE_ROLLBACK;
+      case BROKEN -> GameState.GAME_STATE_BROKEN;
+    };
+  }
+
+  @NotNull
+  static JoinRequest toJoinRequest(Player player, String server, int sessionId) {
+    return JoinRequest.newBuilder()
+      .setServer(toServer(server))
+      .setUser(SpigotProtobuf.toUser(player))
+      .setSessionId(sessionId)
+      .build();
+  }
+
+  @NotNull
+  static Server toServer(String server) {
+    return Server.newBuilder()
+      .setName(server)
+      .build();
   }
 
 

@@ -25,6 +25,8 @@ public interface SessionContext {
 
   JoinResultState tryJoinPlayer(Player player);
 
+  void handleQuitPlayer(Player player);
+
   boolean isInGame(UUID uniqueId);
 
   boolean isInGame(Player player);

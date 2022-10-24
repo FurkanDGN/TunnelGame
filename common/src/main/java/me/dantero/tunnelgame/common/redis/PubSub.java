@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
@@ -127,7 +128,6 @@ public final class PubSub extends RedisPubSubAdapter<byte[], byte[]> {
       final var type = serverMessage.getType();
       final var subscription = this.subscribes.get(type);
       if (subscription.isEmpty()) {
-        System.out.printf("Subscription for %s not found!%n", type);
         return;
       }
       subscription.get().onMessage(serverMessage);

@@ -1,13 +1,16 @@
 package me.dantero.tunnelgame.plugin.listeners;
 
+import com.destroystokyo.paper.event.player.PlayerInitialSpawnEvent;
 import com.gmail.furkanaxx34.dlibrary.bukkit.utils.TaskUtilities;
 import me.dantero.tunnelgame.common.Constants;
 import me.dantero.tunnelgame.common.config.ConfigFile;
 import me.dantero.tunnelgame.common.config.LanguageFile;
+import me.dantero.tunnelgame.common.game.Level;
 import me.dantero.tunnelgame.common.game.Listener;
 import me.dantero.tunnelgame.common.handlers.JoinHandler;
 import me.dantero.tunnelgame.common.manager.PointManager;
 import me.dantero.tunnelgame.common.manager.SessionManager;
+import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
@@ -49,7 +52,7 @@ public class BasicListeners extends Listener {
   private void registerNormalEvents() {
     this.listenEvent(CreatureSpawnEvent.class,
       event -> !event.getSpawnReason().equals(CreatureSpawnEvent.SpawnReason.CUSTOM) &&
-          this.sessionManager.isSessionWorld(Objects.requireNonNull(event.getLocation().getWorld(), "World is null").getName()),
+        this.sessionManager.isSessionWorld(Objects.requireNonNull(event.getLocation().getWorld(), "World is null").getName()),
       event -> event.setCancelled(true)
     );
 
@@ -60,7 +63,12 @@ public class BasicListeners extends Listener {
         .ifPresent(session -> session.handleEntitySpawn(event.getEntity())))
     );
 
-    this.listenEvent(PlayerJoinEvent.class, event -> this.joinHandler.handle(event.getPlayer()));
+    this.listenEvent(PlayerInitialSpawnEvent.class,
+      event -> this.joinHandler.getSpawnLocation(event.getPlayer())
+        .ifPresent(event::setSpawnLocation));
+
+    this.listenEvent(PlayerJoinEvent.class,
+      event -> this.joinHandler.handle(event.getPlayer()));
   }
 
   private void registerInGameEvents() {
@@ -76,16 +84,27 @@ public class BasicListeners extends Listener {
       event -> event.getDamager() instanceof Player && event.getEntity() instanceof Player,
       (event, session) -> event.setCancelled(true));
 
+    this.listenInGameEvent(EntityDamageByEntityEvent.class,
+      event -> event.getDamager() instanceof Player && event.getEntity() instanceof Monster,
+      (event, session) -> {
+        Location location = event.getEntity().getLocation();
+        Level level = session.currentLevel();
+
+        if (level.isPassed(location) || level.isOutBackside(location)) {
+          event.setCancelled(true);
+        }
+      });
+
     this.listenInGameEvent(EntityDeathEvent.class,
       event -> event.getEntity() instanceof Monster,
       (event, session) -> {
         LivingEntity entity = event.getEntity();
+        session.handleEntityDeath(entity);
         Player killer = entity.getKiller();
         if (killer == null) return;
         this.pointManager.addPoints(killer, ConfigFile.killRewardPoints);
         String message = LanguageFile.earnedPoints.build(Map.entry("%points%", () -> String.valueOf(ConfigFile.killRewardPoints)));
         killer.sendMessage(message);
-        session.handleEntityDeath(entity);
       });
 
     this.listenInGameEvent(EntityExplodeEvent.class, (event, session) -> event.blockList().clear());
@@ -94,6 +113,9 @@ public class BasicListeners extends Listener {
 
     this.listenInGameEvent(PlayerRespawnEvent.class, (event, session) -> session.handlePlayerRespawn(event));
 
-    this.listenInGameEvent(PlayerQuitEvent.class, (event, session) -> session.handlePlayerQuit(event.getPlayer()));
+    this.listenInGameEvent(PlayerQuitEvent.class, (event, session) -> {
+      session.handlePlayerQuit(event.getPlayer());
+      this.pointManager.clearPoints(event.getPlayer());
+    });
   }
 }

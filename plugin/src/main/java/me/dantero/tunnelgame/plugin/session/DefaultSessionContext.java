@@ -41,7 +41,7 @@ public class DefaultSessionContext implements SessionContext {
     this.players = new HashSet<>();
     this.worldName = worldName;
     this.playerInventoryStoreManager = playerInventoryStoreManager;
-    this.gameState = GameState.WAITING;
+    this.gameState = GameState.ROLLBACK;
     this.currentLevel = new AtomicInteger(1);
   }
 
@@ -93,6 +93,12 @@ public class DefaultSessionContext implements SessionContext {
 
     this.joinPlayer(player);
     return JoinResultState.SUCCESSFUL;
+  }
+
+  @Override
+  public void handleQuitPlayer(Player player) {
+    UUID uniqueId = player.getUniqueId();
+    this.players.remove(uniqueId);
   }
 
   @Override
@@ -159,7 +165,9 @@ public class DefaultSessionContext implements SessionContext {
   @Override
   public void clear() {
     this.players.clear();
-    this.gameState = GameState.ENDED;
+    this.currentLevel.set(1);
+    this.playerUpgrades.clear();
+    this.teamUpgrades.clear();
     this.getPlayers().forEach(player -> {
       player.getInventory().clear();
       player.updateInventory();
@@ -175,5 +183,7 @@ public class DefaultSessionContext implements SessionContext {
     player.getInventory().clear();
     player.updateInventory();
     player.setGameMode(GameMode.SURVIVAL);
+    player.setHealth(20.0D);
+    player.setFoodLevel(20);
   }
 }

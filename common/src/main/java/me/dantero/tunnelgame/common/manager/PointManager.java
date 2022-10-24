@@ -32,4 +32,6 @@ public interface PointManager {
   default int getPoints(Player player) {
     return this.getPoints(player.getUniqueId());
   }
+
+  void clearPoints(Player player);
 }

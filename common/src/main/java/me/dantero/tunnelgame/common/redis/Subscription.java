@@ -5,7 +5,6 @@ import me.dantero.tunnelgame.common.misc.Key;
 import me.dantero.tunnelgame.common.proto.ServerMessage;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Locale;
 import java.util.function.BiConsumer;
 
 /**
@@ -24,7 +23,7 @@ record Subscription<T extends GeneratedMessageV3>(
   @NotNull
   @Override
   public String key() {
-    return this.template.getClass().getSimpleName().toLowerCase(Locale.ROOT);
+    return this.template.getClass().getSimpleName();
   }
 
   /**
