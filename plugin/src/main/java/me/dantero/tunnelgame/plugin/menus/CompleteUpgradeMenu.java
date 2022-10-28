@@ -122,7 +122,8 @@ public class CompleteUpgradeMenu extends BaseMenu {
     PointManager pointManager = sessionContext.getPointManager();
 
     configMap.forEach((level, upgradeConfig) -> {
-      if (level <= 0) throw new IllegalArgumentException("Level cannot be less or equal to 0");
+      if (level < 0) throw new IllegalArgumentException("Level cannot be less or equal to 0");
+      if (level == 0) return;
 
       int requiredPoints = upgradeConfig.requiredPoints();
       XMaterial material = upgradeConfig.icon();

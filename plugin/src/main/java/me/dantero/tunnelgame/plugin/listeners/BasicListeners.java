@@ -11,7 +11,6 @@ import me.dantero.tunnelgame.common.handlers.JoinHandler;
 import me.dantero.tunnelgame.common.manager.PointManager;
 import me.dantero.tunnelgame.common.manager.SessionManager;
 import org.bukkit.Location;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
@@ -25,6 +24,7 @@ import org.bukkit.plugin.Plugin;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.StreamSupport;
 
 /**
  * @author Furkan Doğan
@@ -124,9 +124,24 @@ public class BasicListeners extends Listener {
         Player player = (Player) event.getEntity();
         double health = player.getHealth();
         double finalDamage = event.getFinalDamage();
+        if (health - finalDamage < 0.1d) {
+          event.setCancelled(true);
+          StreamSupport.stream(player.getInventory().spliterator(), false)
+            .filter(Objects::nonNull)
+            .forEach(itemStack -> player.getWorld().dropItem(player.getLocation(), itemStack));
+          session.handlePlayerDeath(player);
+        }
+      });
+
+    this.listenInGameEvent(EntityDamageByBlockEvent.class, event -> event.getEntity() instanceof Player,
+      (event, session) -> {
+        Player player = (Player) event.getEntity();
+        double health = player.getHealth();
+        double finalDamage = event.getFinalDamage();
         if (health - finalDamage <= 0) {
           event.setCancelled(true);
-          player.getInventory()
+          StreamSupport.stream(player.getInventory().spliterator(), false)
+            .filter(Objects::nonNull)
             .forEach(itemStack -> player.getWorld().dropItem(player.getLocation(), itemStack));
           session.handlePlayerDeath(player);
         }

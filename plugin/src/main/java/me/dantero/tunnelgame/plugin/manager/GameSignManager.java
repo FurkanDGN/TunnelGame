@@ -41,7 +41,7 @@ public class GameSignManager implements SignManager {
       .filter(entry -> entry.getValue().getLine(0).equalsIgnoreCase(ConfigFile.lobbySign.build().get(0)))
       .forEach(entry -> this.signs.put(entry.getKey(), entry.getValue()));
 
-    TaskUtilities.asyncTimerLater(20L * 3L, 1L, bukkitRunnable -> {
+    TaskUtilities.asyncTimerLater(20L * 3L, 10L, bukkitRunnable -> {
       this.signs.forEach((sessionAddress, sign) -> ServerInfos.getSession(sessionAddress.server(), sessionAddress.sessionId())
         .ifPresentOrElse(session -> {
           List<String> lines = ConfigFile.lobbySign.build(
@@ -69,7 +69,7 @@ public class GameSignManager implements SignManager {
           }
         }));
 
-      TaskUtilities.syncTimer(1L, (Consumer<BukkitRunnable>) bukkitRunnable1 -> this.signs.values().forEach(BlockState::update));
+      TaskUtilities.syncTimer(20L * 5L, (Consumer<BukkitRunnable>) bukkitRunnable1 -> this.signs.values().forEach(BlockState::update));
     });
   }
 

@@ -34,6 +34,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.*;
 import org.bukkit.event.player.PlayerRespawnEvent;
@@ -129,6 +130,7 @@ public class WorldSession implements Session {
     this.startCountdown(ConfigFile.startCountdown, LanguageFile.gameStarting.build(),
       unused -> {
         this.sessionContext.setGameState(GameState.IN_GAME);
+        this.inventoryManager.giveStarterKit();
         this.levelConfiguration.levelEntities().get(1).forEach(this::spawnEntity);
         String message = LanguageFile.gameStarted.build();
         this.sendActionBar(message);
@@ -143,7 +145,9 @@ public class WorldSession implements Session {
 
   @Override
   public void stop() {
-    this.peekPlayers(this::sendLobby);
+    if (this.world != null) {
+      this.world.getPlayers().forEach(player -> player.kickPlayer("Game ended. Thanks for playing."));
+    }
     this.sessionContext.clear();
     if (this.sessionContext.isPaused()) {
       this.sessionContext.togglePause();
@@ -190,6 +194,7 @@ public class WorldSession implements Session {
 
     if (level > maxLevel) {
       this.peekPlayers(this::sendLobby);
+      this.sessionContext.setGameState(GameState.ROLLBACK);
       TaskUtilities.syncLater(20 * 5, bukkitRunnable -> this.restart());
       return;
     }
@@ -235,7 +240,9 @@ public class WorldSession implements Session {
     player.getActivePotionEffects().forEach(potionEffect -> player.removePotionEffect(potionEffect.getType()));
     player.updateInventory();
     player.setGameMode(GameMode.SPECTATOR);
-    this.maybeEnd();
+    if (this.maybeEnd()) {
+      this.sendLobby(player);
+    }
   }
 
   @Override
@@ -249,6 +256,7 @@ public class WorldSession implements Session {
     player.getActivePotionEffects().forEach(potionEffect -> player.removePotionEffect(potionEffect.getType()));
     player.updateInventory();
     player.setGameMode(GameMode.SPECTATOR);
+    this.maybeEnd();
   }
 
   @Override
@@ -257,6 +265,7 @@ public class WorldSession implements Session {
     player.getActivePotionEffects().forEach(potionEffect -> player.removePotionEffect(potionEffect.getType()));
     player.getInventory().clear();
     if (this.sessionContext.getPlayers().size() == 0 && this.getSessionContext().getGameState() == GameState.IN_GAME) {
+      this.sessionContext.setGameState(GameState.ROLLBACK);
       TaskUtilities.syncLater(1, bukkitRunnable -> this.restart());
     }
   }
@@ -266,6 +275,14 @@ public class WorldSession implements Session {
     JoinResultState joinResultState = this.sessionContext.tryJoinPlayer(player);
 
     if (joinResultState == JoinResultState.SUCCESSFUL) {
+      player.getInventory().clear();
+      player.updateInventory();
+      player.getActivePotionEffects()
+        .forEach(potionEffect -> player.removePotionEffect(potionEffect.getType()));
+      player.setHealth(20);
+      Optional.ofNullable(player.getAttribute(Attribute.GENERIC_MAX_HEALTH))
+        .ifPresent(attribute -> attribute.setBaseValue(20));
+      player.setFoodLevel(20);
       if (this.sessionContext.getPlayers().size() >= 1 && this.sessionContext.getGameState() == GameState.WAITING) {
         this.start();
       } else {
@@ -413,9 +430,8 @@ public class WorldSession implements Session {
     boolean condition = this.sessionContext.getPlayers().size() == 0 ||
       this.sessionContext.getCurrentLevel().get() >= this.levels.size();
     if (condition) {
-      TaskUtilities.syncLater(20 * 5, bukkitRunnable -> {
-        this.restart();
-      });
+      this.sessionContext.setGameState(GameState.ROLLBACK);
+      TaskUtilities.syncLater(20 * 5, bukkitRunnable -> this.restart());
     }
 
     return condition;

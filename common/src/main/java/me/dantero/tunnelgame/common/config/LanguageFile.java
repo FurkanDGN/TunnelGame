@@ -46,7 +46,7 @@ public class LanguageFile extends TransformedObject {
 
   public static RpString levelUp = RpString.from(
     "&eLevel %level% Started"
-  ).map(XColor::colorize);
+  ).regex("%level%").map(XColor::colorize);
 
   public static RpString waiting4Upgrades = RpString.from(
     "&e&lWaiting for upgrades"

@@ -48,7 +48,7 @@ public interface Servers {
    */
   @NotNull
   static String getServerName() {
-    return String.format("%s-%s", ConfigFile.lobbyMode ? "lobby" : "server", ConfigFile.serverId);
+    return ConfigFile.serverId;
   }
 
   /**

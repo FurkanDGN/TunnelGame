@@ -27,7 +27,6 @@ public class BungeeUtil {
   public void init(Plugin plugin, PubSub pubSub) {
     BungeeUtil.plugin = plugin;
     BungeeUtil.pubSub = pubSub;
-    Bukkit.getServer().getMessenger().registerOutgoingPluginChannel(plugin, "BungeeCord");
   }
 
   public void sendPlayerWithMessage(Player player, String server, int sessionId) {

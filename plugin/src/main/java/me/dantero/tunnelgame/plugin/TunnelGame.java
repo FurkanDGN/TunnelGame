@@ -91,10 +91,11 @@ public final class TunnelGame extends JavaPlugin {
       ServerInfos.initLobby();
     } else {
       Runnable runnable = ServerInfos.init(() -> -1, sessionManager::sessions);
-      Bukkit.getScheduler().runTaskTimer(this, runnable, 1, 20);
+      Bukkit.getScheduler().runTaskTimerAsynchronously(this, runnable, 1, 20);
     }
     this.pubSub = new PubSub(Topics.JOIN_PLAYER);
     BungeeUtil.init(this, this.pubSub);
+    Bukkit.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
   }
 
   private void initializeSessions(PointManager pointManager) {
