@@ -85,7 +85,7 @@ public class LobbyListeners implements Listener {
         Servers.LIST.stream()
           .filter(spigotServer -> spigotServer.sessions().contains(sessionId))
           .findFirst()
-          .ifPresent(spigotServer -> BungeeUtil.sendPlayer(player, spigotServer.name(), sessionId));
+          .ifPresent(spigotServer -> BungeeUtil.sendPlayerWithMessage(player, spigotServer.name(), sessionId));
       } else {
         boolean check = CooldownUtil.check(player, "sign-interact", 5000L);
         if (check) {

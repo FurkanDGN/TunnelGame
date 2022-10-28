@@ -16,8 +16,10 @@ import me.dantero.tunnelgame.common.game.configuration.ModifiedEntitySetting;
 import me.dantero.tunnelgame.common.game.state.GameState;
 import me.dantero.tunnelgame.common.game.state.JoinResultState;
 import me.dantero.tunnelgame.common.manager.InventoryManager;
+import me.dantero.tunnelgame.common.manager.PointManager;
 import me.dantero.tunnelgame.common.manager.ScoreboardManager;
 import me.dantero.tunnelgame.common.manager.WorldManager;
+import me.dantero.tunnelgame.common.util.BungeeUtil;
 import me.dantero.tunnelgame.common.util.FilenameUtil;
 import me.dantero.tunnelgame.common.util.LocationUtil;
 import me.dantero.tunnelgame.plugin.level.TunnelLevel;
@@ -29,6 +31,7 @@ import me.dantero.tunnelgame.plugin.session.manager.PlayerInventoryStoreManager;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.BlockFace;
@@ -61,6 +64,7 @@ public class WorldSession implements Session {
   private final List<ModifiedEntity> currentEntities;
   private final ScoreboardManager scoreboardManager;
   private final InventoryManager inventoryManager;
+  private final PointManager pointManager;
 
   @Nullable
   private World world;
@@ -68,12 +72,13 @@ public class WorldSession implements Session {
   public WorldSession(File worldRecoverPath,
                       WorldManager worldManager,
                       LevelConfiguration levelConfiguration,
-                      Plugin plugin) {
+                      Plugin plugin,
+                      PointManager pointManager) {
     Objects.requireNonNull(worldRecoverPath, "World recover path cannot be null");
     Objects.requireNonNull(worldManager, "World manager cannot be null");
     Objects.requireNonNull(levelConfiguration, "Level configuration cannot be null");
     Objects.requireNonNull(plugin, "Plugin cannot be null");
-
+    Objects.requireNonNull(pointManager, "Point manager cannot be null");
     File worldPath = this.buildWorldPath(worldRecoverPath);
     this.sessionId = SESSION_ID_COUNTER.get();
     this.mapManager = new MapManager(worldPath, worldRecoverPath, worldManager);
@@ -90,6 +95,8 @@ public class WorldSession implements Session {
     this.scoreboardManager.setup(this);
 
     this.inventoryManager = new DefaultInventoryManager(() -> this.sessionContext.getPlayers().stream());
+
+    this.pointManager = pointManager;
   }
 
   @Override
@@ -136,7 +143,7 @@ public class WorldSession implements Session {
 
   @Override
   public void stop() {
-    this.peekPlayers(player -> player.kickPlayer("Game ended. Thanks for playing."));
+    this.peekPlayers(this::sendLobby);
     this.sessionContext.clear();
     if (this.sessionContext.isPaused()) {
       this.sessionContext.togglePause();
@@ -182,8 +189,8 @@ public class WorldSession implements Session {
     int level = this.sessionContext.getCurrentLevel().incrementAndGet();
 
     if (level > maxLevel) {
-      this.peekPlayers(player -> player.kickPlayer("Game ended. Thanks for playing."));
-      TaskUtilities.syncLater(20 * 2, bukkitRunnable -> this.restart());
+      this.peekPlayers(this::sendLobby);
+      TaskUtilities.syncLater(20 * 5, bukkitRunnable -> this.restart());
       return;
     }
 
@@ -222,18 +229,33 @@ public class WorldSession implements Session {
 
   @Override
   public void handlePlayerDeath(Player player) {
-
+    this.pointManager.clearPoints(player);
+    this.sessionContext.handleQuitPlayer(player);
+    player.getInventory().clear();
+    player.getActivePotionEffects().forEach(potionEffect -> player.removePotionEffect(potionEffect.getType()));
+    player.updateInventory();
+    player.setGameMode(GameMode.SPECTATOR);
+    this.maybeEnd();
   }
 
   @Override
   public void handlePlayerRespawn(PlayerRespawnEvent event) {
     Location currentLevelSpawnPoint = this.currentLevelSpawnPoint();
     event.setRespawnLocation(currentLevelSpawnPoint);
+    Player player = event.getPlayer();
+    this.pointManager.clearPoints(player);
+    this.sessionContext.handleQuitPlayer(player);
+    player.getInventory().clear();
+    player.getActivePotionEffects().forEach(potionEffect -> player.removePotionEffect(potionEffect.getType()));
+    player.updateInventory();
+    player.setGameMode(GameMode.SPECTATOR);
   }
 
   @Override
   public void handlePlayerQuit(Player player) {
     this.sessionContext.handleQuitPlayer(player);
+    player.getActivePotionEffects().forEach(potionEffect -> player.removePotionEffect(potionEffect.getType()));
+    player.getInventory().clear();
     if (this.sessionContext.getPlayers().size() == 0 && this.getSessionContext().getGameState() == GameState.IN_GAME) {
       TaskUtilities.syncLater(1, bukkitRunnable -> this.restart());
     }
@@ -387,6 +409,18 @@ public class WorldSession implements Session {
     });
   }
 
+  private boolean maybeEnd() {
+    boolean condition = this.sessionContext.getPlayers().size() == 0 ||
+      this.sessionContext.getCurrentLevel().get() >= this.levels.size();
+    if (condition) {
+      TaskUtilities.syncLater(20 * 5, bukkitRunnable -> {
+        this.restart();
+      });
+    }
+
+    return condition;
+  }
+
   private Location currentLevelSpawnPoint() {
     int currentLevel = this.sessionContext.getCurrentLevel().get();
     int totalLength = this.calculateLevelLength(currentLevel) + currentLevel - 1;
@@ -428,5 +462,15 @@ public class WorldSession implements Session {
       .stream()
       .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey(), new TunnelLevel(entry.getValue(), ConfigFile.lowestBlockHeight)))
       .collect(HashMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), Map::putAll);
+  }
+
+  private void sendLobby(Player player) {
+    UUID uniqueId = player.getUniqueId();
+    String comingFrom = this.sessionContext.getComingFrom(uniqueId);
+    if (comingFrom != null && !comingFrom.isBlank()) {
+      BungeeUtil.sendPlayerWithoutMessage(player, comingFrom);
+    } else {
+      player.kickPlayer("Game ended. Thanks for playing.");
+    }
   }
 }

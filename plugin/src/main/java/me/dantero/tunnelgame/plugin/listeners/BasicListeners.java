@@ -11,6 +11,7 @@ import me.dantero.tunnelgame.common.handlers.JoinHandler;
 import me.dantero.tunnelgame.common.manager.PointManager;
 import me.dantero.tunnelgame.common.manager.SessionManager;
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
@@ -117,5 +118,18 @@ public class BasicListeners extends Listener {
       session.handlePlayerQuit(event.getPlayer());
       this.pointManager.clearPoints(event.getPlayer());
     });
+
+    this.listenInGameEvent(EntityDamageByEntityEvent.class, event -> event.getEntity() instanceof Player,
+      (event, session) -> {
+        Player player = (Player) event.getEntity();
+        double health = player.getHealth();
+        double finalDamage = event.getFinalDamage();
+        if (health - finalDamage <= 0) {
+          event.setCancelled(true);
+          player.getInventory()
+            .forEach(itemStack -> player.getWorld().dropItem(player.getLocation(), itemStack));
+          session.handlePlayerDeath(player);
+        }
+      });
   }
 }

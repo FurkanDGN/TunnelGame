@@ -39,6 +39,10 @@ public interface SessionContext {
 
   void togglePause();
 
+  void setComingFrom(String uuid, String server);
+
+  String getComingFrom(UUID uuid);
+
   PointManager getPointManager();
 
   GameState getGameState();

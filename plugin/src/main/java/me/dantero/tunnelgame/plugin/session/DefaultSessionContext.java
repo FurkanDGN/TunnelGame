@@ -25,6 +25,7 @@ public class DefaultSessionContext implements SessionContext {
   private final PointManager pointManager;
   private final Map<String, Integer> playerUpgrades;
   private final Map<String, Integer> teamUpgrades;
+  private final Map<UUID, String> comingFroms;
   private final Set<UUID> players;
   private final String worldName;
   private final PlayerInventoryStoreManager playerInventoryStoreManager;
@@ -38,6 +39,7 @@ public class DefaultSessionContext implements SessionContext {
     this.pointManager = new DefaultPointManager();
     this.playerUpgrades = new HashMap<>();
     this.teamUpgrades = new HashMap<>();
+    this.comingFroms = new HashMap<>();
     this.players = new HashSet<>();
     this.worldName = worldName;
     this.playerInventoryStoreManager = playerInventoryStoreManager;
@@ -132,6 +134,16 @@ public class DefaultSessionContext implements SessionContext {
   }
 
   @Override
+  public void setComingFrom(String uuid, String server) {
+    this.comingFroms.put(UUID.fromString(uuid), server);
+  }
+
+  @Override
+  public String getComingFrom(UUID uuid) {
+    return this.comingFroms.get(uuid);
+  }
+
+  @Override
   public PointManager getPointManager() {
     return this.pointManager;
   }
@@ -168,6 +180,7 @@ public class DefaultSessionContext implements SessionContext {
     this.currentLevel.set(1);
     this.playerUpgrades.clear();
     this.teamUpgrades.clear();
+    this.comingFroms.clear();
     this.getPlayers().forEach(player -> {
       player.getInventory().clear();
       player.updateInventory();

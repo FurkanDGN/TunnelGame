@@ -62,7 +62,7 @@ public final class TunnelGame extends JavaPlugin {
     this.initiateSystems(this.sessionManager);
     PointManager pointManager = new DefaultPointManager();
     JoinHandler joinHandler = new DefaultJoinHandler(this.sessionManager);
-    if (!ConfigFile.lobbyMode) this.initializeSessions();
+    if (!ConfigFile.lobbyMode) this.initializeSessions(pointManager);
     SignManager signManager = new GameSignManager();
     this.registerEvents(this.sessionManager, pointManager, joinHandler, signManager);
   }
@@ -97,18 +97,18 @@ public final class TunnelGame extends JavaPlugin {
     BungeeUtil.init(this, this.pubSub);
   }
 
-  private void initializeSessions() {
+  private void initializeSessions(PointManager pointManager) {
     SlimePlugin slimePlugin = (SlimePlugin) Bukkit.getPluginManager().getPlugin("SlimeWorldManager");
     WorldManager worldManager = new SlimeWorldManager(slimePlugin);
     File file = new File(this.getDataFolder() + File.separator + "worlds", "default.slime");
 
     for (int i = 0; i < ConfigFile.maxSessionCount; i++) {
-      this.initNewSession(worldManager, file);
+      this.initNewSession(worldManager, file, pointManager);
     }
   }
 
-  private void initNewSession(WorldManager worldManager, File file) {
-    Session session = new WorldSession(file, worldManager, LevelConfigFile.levelConfiguration, this);
+  private void initNewSession(WorldManager worldManager, File file, PointManager pointManager) {
+    Session session = new WorldSession(file, worldManager, LevelConfigFile.levelConfiguration, this, pointManager);
     this.sessionManager.setupSession(session);
   }
 

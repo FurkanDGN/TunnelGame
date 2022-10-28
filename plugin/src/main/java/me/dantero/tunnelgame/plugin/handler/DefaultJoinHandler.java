@@ -3,9 +3,11 @@ package me.dantero.tunnelgame.plugin.handler;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import me.dantero.tunnelgame.common.config.ConfigFile;
+import me.dantero.tunnelgame.common.game.SessionContext;
 import me.dantero.tunnelgame.common.handlers.JoinHandler;
 import me.dantero.tunnelgame.common.manager.SessionManager;
 import me.dantero.tunnelgame.common.proto.JoinRequest;
+import me.dantero.tunnelgame.common.proto.ServerMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -46,7 +48,8 @@ public class DefaultJoinHandler implements JoinHandler {
   }
 
   @Override
-  public void handleRequest(JoinRequest joinRequest) {
+  public void handleRequest(ServerMessage serverMessage, JoinRequest joinRequest) {
+    String source = serverMessage.getSource();
     int sessionId = joinRequest.getSessionId();
     String uuid = joinRequest.getUser().getId();
 
@@ -54,7 +57,10 @@ public class DefaultJoinHandler implements JoinHandler {
       .filter(session -> session.sessionId() == sessionId)
       .findFirst()
       .ifPresent(session -> {
-        String worldName = session.getSessionContext().getWorldName();
+        SessionContext sessionContext = session.getSessionContext();
+
+        sessionContext.setComingFrom(uuid, source);
+        String worldName = sessionContext.getWorldName();
         Location spawnPoint = ConfigFile.getSpawnPoint();
         spawnPoint.setWorld(Bukkit.getWorld(worldName));
         this.CACHE.put(uuid, spawnPoint);
