@@ -13,11 +13,6 @@ level-1:
       type: SKELETON
 
       ammo-attribute:
-        harming:
-          type: HARM
-          level: 1
-          duration: "3sec"
-          chance: 40
         slowness:
           type: SLOW
           level: 2

@@ -23,7 +23,7 @@ kill-reward-points: 20
 # Name of server in Bungeecord should be like 'server mode-id' for example:
 # If lobby: lobby-1
 # If not: server-1
-server-id: '1'
+server-id: 'lobby-1'
 # Scoreboard title.
 scoreboard-title: '&6&lTunnel Game'
 # Scoreboard lines.

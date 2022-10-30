@@ -1,12 +1,10 @@
 syntax = "proto3";
 
-option java_package = "me.dantero.tunnelgame.common.proto";
+option java_package = "com.github.furkandgn.tunnelgame.common.proto";
 option java_outer_classname = "Messaging";
 option java_multiple_files = true;
 
-option optimize_for = LITE_RUNTIME;
-
-package me.dantero.tunnelgame.common.proto;
+package com.github.furkandgn.tunnelgame.common.proto;
 
 import "definitions.proto";
 
